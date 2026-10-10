@@ -39,7 +39,7 @@ pub const RHO_SED: f64 = 2700.0;
 /// kg C taken from the air for each m3 of rock weathered: with about 7e9 m3 a year this is about 0.1 GtC/yr,
 /// the order of the silicate weathering sink (Gaillardet et al. 1999; figure to be re-checked).
 /// kg of phosphorus released per m3 of rock weathered (about 0.01 percent of the mass, a typical crustal figure to be checked).
-pub const ROCK_P_KG_PER_M3: f64 = 0.27;
+pub const ROCK_P_KG_PER_M3: f64 = 1.5;
 pub const CO2_PER_M3: f64 = 14.0;
 const M3_PER_MKM2: f64 = 1.0e6; // one m x km2 is 1e6 m3
 pub const SEC_PER_YEAR: f64 = crate::units::SECONDS_PER_YEAR;

@@ -36,12 +36,14 @@ const CALVE_SPEED_M: f64 = 400.0;
 const FRONT_H_M: f64 = 400.0;
 /// Share of the tile width that valley ice uses when it slides down between bands.
 const VALLEY: f64 = 0.15;
+/// Years in which the calving speed is calibrated.
+const CALIB_YEARS: u8 = 3;
 
-pub struct IceFlow { env: Env, ids: Option<Ids> }
+pub struct IceFlow { env: Env, ids: Option<Ids>, calv: f64, prev_mass: f64, prev_calving: f64, calls: u8 }
 struct Ids { ice: Vec<StockId>, sea: StockId, rock: StockId, reg: StockId, sg: StockId, ss: StockId, sm: StockId, defl: StockId }
 
 impl IceFlow {
-    pub fn new(env: Env) -> Self { IceFlow { env, ids: None } }
+    pub fn new(env: Env) -> Self { IceFlow { env, ids: None, calv: 1.0, prev_mass: 0.0, prev_calving: 0.0, calls: 0 } }
 }
 
 impl Module for IceFlow {
@@ -78,6 +80,17 @@ impl Module for IceFlow {
             mass[i] = (0..BANDS).map(|b| ice[b][i] as f64).sum();
         }
         if mass.iter().all(|&m| m <= 0.0) { return Ok(()); }
+        // Calibration of the calving speed. Today's ice sheets are taken to be near balance. In each of the first
+        // three years the net change of the whole ice stock is turned into a change of calving, so that the ice
+        // starts level. After that the calving speed is fixed and the ice follows the climate freely.
+        let total: f64 = (0..n).map(|i| mass[i] * area[i] as f64).sum();
+        if self.calls >= 1 && self.calls <= CALIB_YEARS && self.prev_calving > 0.0 {
+            let net = total - self.prev_mass;
+            self.calv = (self.calv * (1.0 + net / self.prev_calving)).clamp(0.2 * self.calv.min(1.0), 3.0);
+        }
+        self.prev_mass = total;
+        self.calls = self.calls.saturating_add(1);
+        let mut calved = 0f64;
         // ice temperature: the tile's mean annual air temperature, never above freezing
         let t_ice: Vec<f64> = (0..n).map(|i| (0..12).map(|m| env.tobs[m][i] as f64).sum::<f64>() / 12.0).collect();
         let bed_mean = |i: usize| env.p.bed0[i] + shift[i];
@@ -138,13 +151,15 @@ impl Module for IceFlow {
                 let j = *j as usize;
                 {
                     let edge_m = env.p.nbr_km[i][k] as f64 * 1000.0 / 3f64.sqrt();
-                    let v = dt * CALVE_SPEED_M * thick(m_cur[i]).min(FRONT_H_M) * edge_m; // m3
+                    let v = dt * CALVE_SPEED_M * self.calv * thick(m_cur[i]).min(FRONT_H_M) * edge_m; // m3
                     let a = (v * M3_ICE_TO_MM_KM2).min(0.2 * m_cur[i] * area[i] as f64);
                     *moved.entry((i as u32, j as u32)).or_insert(0.0) += a;
                     m_cur[i] -= a / area[i] as f64;
+                    calved += a;
                 }
             }
         }
+        self.prev_calving = calved;
         // A tile cannot give away more than it holds. Ice that came in earlier in the year and went
         // out again is booked against the start-of-year bands, so keep a margin.
         {
@@ -196,6 +211,18 @@ impl Module for IceFlow {
         }
         if any { for b in 1..BANDS { out.dense_local(ids.ice[b], ids.ice[b - 1], n).copy_from_slice(&down[b]); } }
         let _ = Endpoint::Transit;
+        Ok(())
+    }
+    fn save_state(&self) -> Option<Vec<u8>> {
+        let mut b = vec![self.calls];
+        for v in [self.calv, self.prev_mass, self.prev_calving] { b.extend(v.to_le_bytes()); }
+        Some(b)
+    }
+    fn load_state(&mut self, b: &[u8]) -> Result<(), WorldError> {
+        if b.len() < 25 { return Err(WorldError::Save("iceflow state".into())); }
+        self.calls = b[0];
+        let f = |k: usize| f64::from_le_bytes(b[1 + 8 * k..9 + 8 * k].try_into().unwrap());
+        self.calv = f(0); self.prev_mass = f(1); self.prev_calving = f(2);
         Ok(())
     }
 }

@@ -115,7 +115,7 @@ impl Module for Fauna {
                         let f: f64 = gd.plants.iter().map(|&(p, acc)| acc as f64 * lf[p]).sum();
                         if f > 1e-12 {
                             let want = gd.i_max as f64 * b[g] * h * f / (f + gs.k_half as f64);
-                            let take = want.min(0.15 * f);
+                            let take = want.min(0.04 * f);
                             for &(p, acc) in &gd.plants {
                                 let d = take * acc as f64 * lf[p] / f;
                                 lf[p] -= d; eat_leaf[g][p] += d; gain_c += d; lit += (1.0 - gd.assim as f64) * d;

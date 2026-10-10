@@ -7,7 +7,7 @@
 //! "placeholder" is a stand-in and is to be replaced when the real module lands.
 //!
 //! - `demo_radiation`: Budyko-Sellers energy balance per tile (North et al. 1981:
-//!   OLR = A + B (T - 273.15), A = 203.3 W/m2, B = 2.09 W/m2/K; figures from memory).
+//!   OLR = A + B (T - 273.15), A = 203.3 W/m2, B = 2.09 W/m2/K; A and B checked against a UW course handout citing satellite fits).
 //! - `demo_mixing`: heat diffusion on a coarse grid, solved implicitly, because an
 //!   explicit step at tile size is unstable by a factor of about 100.
 //! - `demo_water`: evaporation, advection, rain, snow melt and runoff. Closed: no boundary.
@@ -26,7 +26,7 @@ const S0: f64 = 1361.0;
 const ALBEDO: f64 = 0.30; // placeholder: fixed, later from ice and plants
 const OLR_A: f64 = 203.3;
 const OLR_B: f64 = 2.09;
-const DIFF_D: f64 = 0.649; // W/m2/K on the unit sphere, North et al. 1981 (from memory)
+const DIFF_D: f64 = 0.649; // W/m2/K on the unit sphere, North et al. 1981 (value not checked; the model itself uses 0.55, inside the 0.44 to 0.65 range quoted by the paper)
 const C_LAND: f64 = 10.0; // MJ/m2/K, placeholder
 const C_SEA: f64 = 150.0; // MJ/m2/K, placeholder: about a 36 m mixed layer
 const MJ_PER_W_MONTH: f64 = SECONDS_PER_MONTH * 1e-6;

@@ -81,6 +81,8 @@ pub fn surface_albedo(env: &Env, i: usize, t: f32, h: f32, f_landice: f32, cover
 /// Monthly insolation by latitude (181 steps, -90..90) for one year's orbit.
 pub struct InsolTable { pub year: i64, q: Vec<[f32; 12]> }
 impl InsolTable {
+    /// The orbit is held for 25-year blocks, so a run that resumes from a save sees the same table as one that did not stop.
+    pub fn block_year(year: i64) -> i64 { year.div_euclid(25) * 25 }
     pub fn build(year: i64) -> InsolTable {
         let o = orbit::orbit_at(year as f64);
         let q = (0..=180).map(|k| { let lat = k as f64 - 90.0; let mut r = [0f32; 12]; for m in 0..12 { r[m] = orbit::monthly_insolation(lat, m, o) as f32; } r }).collect();
@@ -153,7 +155,7 @@ impl Module for Climate {
         let n = self.env.n();
         let m = ctx.month_of_year as usize;
         let m2 = (m + 1) % 12;
-        if self.now.as_ref().map_or(true, |t| (t.year - ctx.year).abs() >= 25) { self.now = Some(InsolTable::build(ctx.year)); }
+        if self.now.as_ref().map_or(true, |t| t.year != InsolTable::block_year(ctx.year)) { self.now = Some(InsolTable::build(InsolTable::block_year(ctx.year))); }
         let (now, refr) = (self.now.as_ref().unwrap(), self.reference.as_ref().unwrap());
         let heat = view.stock(ids.heat)?;
         let deep = view.stock(ids.deep)?;

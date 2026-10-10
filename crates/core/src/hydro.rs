@@ -104,7 +104,7 @@ impl Module for Hydro {
         let m = ctx.month_of_year as usize;
         let grid = ctx.grid;
         let area = &grid.area_km2;
-        if self.insol.as_ref().map_or(true, |t| (t.year - ctx.year).abs() >= 25) { self.insol = Some(InsolTable::build(ctx.year)); }
+        if self.insol.as_ref().map_or(true, |t| t.year != InsolTable::block_year(ctx.year)) { self.insol = Some(InsolTable::build(InsolTable::block_year(ctx.year))); }
         let insol = self.insol.as_ref().unwrap();
 
         let wx = view.stock(ids.wx_p)?;

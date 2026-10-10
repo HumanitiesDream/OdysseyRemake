@@ -106,7 +106,7 @@ impl Module for Fire {
         starts.sort_unstable(); starts.dedup();
         // a carried front spreads on from tiles that already burned; they do not burn twice
         for &c in &carried { queued[c] = true; }
-        let burn_frac = |i: usize| (0.15 + 0.75 * dry[i]).min(0.95);
+        let burn_frac = |i: usize| (0.15 + 0.45 * dry[i]).min(0.6);
         let mut fires: Vec<(usize, f64)> = Vec::new();
         let mut jobs: Vec<(usize, bool)> = carried.iter().map(|&c| (c, true)).collect();
         for &s in &starts { if !queued[s] { jobs.push((s, false)); } }

@@ -82,7 +82,7 @@ impl Module for Plants {
         let n = env.n();
         let m = ctx.month_of_year as usize;
         let grid = ctx.grid;
-        if self.insol.as_ref().map_or(true, |t| (t.year - ctx.year).abs() >= 25) { self.insol = Some(InsolTable::build(ctx.year)); }
+        if self.insol.as_ref().map_or(true, |t| t.year != InsolTable::block_year(ctx.year)) { self.insol = Some(InsolTable::build(InsolTable::block_year(ctx.year))); }
         let insol = self.insol.as_ref().unwrap();
         let days = DAYS_PER_MONTH * ctx.dt_months as f32;
         let dt_yr = ctx.dt_months as f32 / 12.0;
@@ -180,7 +180,7 @@ impl Module for Plants {
                     dp += (npp * (al / CP_LEAF + aw / CP_WOOD + ar / CP_ROOT)) as f64;
                 } else {
                     // respiration exceeds what the leaves bring in: it draws on leaves and roots
-                    let draw = (-net).min(0.4 * (cl + cr));
+                    let draw = (-net).min(0.25 * (cl + cr));
                     if cl + cr > 0.0 {
                         lanes[base + 3][i] = draw * cl / (cl + cr); lanes[base + 4][i] = draw * cr / (cl + cr);
                         used[base + 3] = true; used[base + 4] = true;
@@ -200,9 +200,9 @@ impl Module for Plants {
                 if net < 0.0 && f_w < 0.3 { mort += 0.3; }
                 // evergreens cannot drop their leaves in a dry season, and pay for it
                 if t.phen == Phen::Evergreen { mort += 0.25 * (1.0 - f_w).powi(2); }
-                let k_leaf = (1.0 / t.turn_leaf.max(0.1) + mort).min(6.0) * dt_yr;
-                let k_wood = (bg_wood + mort).min(6.0) * dt_yr;
-                let k_root = (1.0 / t.turn_root.max(0.1) + mort).min(6.0) * dt_yr;
+                let k_leaf = (1.0 / t.turn_leaf.max(0.1) + mort).min(3.0) * dt_yr;
+                let k_wood = (bg_wood + mort).min(3.0) * dt_yr;
+                let k_root = (1.0 / t.turn_root.max(0.1) + mort).min(3.0) * dt_yr;
                 lanes[base + 5][i] = cl * (1.0 - (-k_leaf).exp()); lanes[base + 6][i] = cw * (1.0 - (-k_wood).exp()); lanes[base + 7][i] = cr * (1.0 - (-k_root).exp());
                 used[base + 5] = true; used[base + 6] = true; used[base + 7] = true;
                 // dead tissue becomes litter, which has its own C:N and C:P: it frees or takes nutrients

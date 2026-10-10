@@ -125,3 +125,19 @@ fn debug_antarctic_tile() {
         b.sim.run_years(1);
     }
 }
+
+#[test]
+fn glacial_carbon_dioxide_and_orbit_cool_the_world_part_of_the_way() {
+    // Last Glacial Maximum: 190 ppm CO2 and the orbit of 21,000 years ago, but today's ice sheets.
+    // Tierney et al. 2020 find 6.1 K of cooling in all; ice sheets and dust make up the rest, so this
+    // run should give a part of it: more than 1.5 K and less than 5 K.
+    let mut s = Setup::physical(24);
+    s.only = Some(vec!["climate".into()]);
+    let mut b0 = build(&s).unwrap();
+    s.co2_ppm = 190.0; s.start_year = -21000;
+    let mut b1 = build(&s).unwrap();
+    for b in [&mut b0, &mut b1] { b.sim.parallel = Parallel::Off; b.sim.run_years(300); }
+    let dt = mean_t(&b1) - mean_t(&b0);
+    println!("glacial CO2 and orbit: {dt:.2} K after 300 years");
+    assert!(dt < -1.5 && dt > -5.0, "cooling {dt} K");
+}

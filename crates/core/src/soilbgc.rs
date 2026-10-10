@@ -29,11 +29,15 @@ pub const FRAC: [[f64; 4]; 4] = [
     [0.50, 0.45, 0.00, 0.05], // slow
     [0.50, 0.50, 0.00, 0.00], // passive
 ];
-pub const NFIX_KG_M2_YR: f64 = 4.0e-4;
-pub const N_LOSS_PER_YR: f64 = 0.15;
+pub const NFIX_KG_M2_YR: f64 = 8.0e-4;
+pub const N_LOSS_PER_YR: f64 = 0.03;
 pub const P_SORB_PER_YR: f64 = 0.2;
 pub const P_DESORB_PER_YR: f64 = 0.002;
-pub const P_LOSS_PER_YR: f64 = 0.05;
+pub const P_LOSS_PER_YR: f64 = 0.02;
+/// mineral N that counts as plenty, kgN/m2
+pub const N_REF: f64 = 0.003;
+/// capacity of the occluded P pool, kgP/m2
+pub const P_OCC_CAP: f64 = 0.02;
 
 pub fn moisture_factor(w: f64) -> f64 {
     let dry = (w / FIELD_CAP as f64).clamp(0.05, 1.0);
@@ -81,7 +85,8 @@ impl Module for SoilBgc {
         for i in 0..n {
             if w_sea[i] > 50.0 && env.ocean0[i] { continue; }
             let tc = env.t_from_h(i, heat[i]) as f64 - 273.15;
-            let w = w_land[i] as f64;
+            // lake and river water stored on the tile is not soil water: the soil is at most waterlogged
+            let w = (w_land[i] as f64).min(300.0);
             let rate_f = temp_factor_soil(tc) * moisture_factor(w);
             // potential decay of each pool this step
             let mut dec = [0f64; 4];
@@ -94,10 +99,11 @@ impl Module for SoilBgc {
                 dn += dec[k] * (1.0 / CN[k] as f64 - take_n);
                 dpp += dec[k] * (1.0 / CP[k] as f64 - take_p);
             }
-            // mineral shortage slows the decay that needs to build new pools
-            let mut s = 1.0f64;
-            if dn < 0.0 && -dn > 0.4 * n_min[i].max(0.0) as f64 { s = s.min(0.4 * n_min[i].max(0.0) as f64 / -dn); }
-            if dpp < 0.0 && -dpp > 0.4 * p_min[i].max(0.0) as f64 { s = s.min(0.4 * p_min[i].max(0.0) as f64 / -dpp); }
+            // Decay is not slowed by a shortage of mineral nitrogen or phosphorus. The organic stock is one lump, so
+            // pool ratios are not tracked one by one. A shortage only limits how much mineral N or P the building of
+            // slower pools can take up (below). This avoids a lock-up where plants drain the mineral pool, decay stalls
+            // and litter piles up without end.
+            let s = 1.0f64;
             for k in 0..4 {
                 let d = dec[k] * s;
                 if d <= 0.0 { continue; }
@@ -110,13 +116,15 @@ impl Module for SoilBgc {
                 }
             }
             // mineralisation cannot free more than the organic pool holds (it can fall short of the ratios when nitrogen is scarce)
-            if dn >= 0.0 { n_in[i] = (dn * s).min(0.3 * n_org[i].max(0.0) as f64) as f32; } else { n_out[i] = (-dn * s) as f32; }
-            if dpp >= 0.0 { p_in[i] = (dpp * s).min(0.3 * p_org[i].max(0.0) as f64) as f32; } else { p_out[i] = (-dpp * s) as f32; }
+            if dn >= 0.0 { n_in[i] = (dn * s).min(0.3 * n_org[i].max(0.0) as f64) as f32; } else { n_out[i] = (-dn * s).min(0.4 * n_min[i].max(0.0) as f64) as f32; }
+            if dpp >= 0.0 { p_in[i] = (dpp * s).min(0.3 * p_org[i].max(0.0) as f64) as f32; } else { p_out[i] = (-dpp * s).min(0.4 * p_min[i].max(0.0) as f64) as f32; }
             // inputs and losses of the mineral pools
             let f_in = ((tc + 5.0) / 25.0).clamp(0.0, 1.0) * (w / FIELD_CAP as f64).min(1.0);
-            nfix[i] = (NFIX_KG_M2_YR * f_in * dt) as f32;
+            // fixation rises when mineral nitrogen is scarce (fixers win where nitrogen is short)
+            let scarce = (1.0 - n_min[i].max(0.0) as f64 / N_REF).clamp(0.0, 1.0);
+            nfix[i] = (NFIX_KG_M2_YR * f_in * (1.0 + 3.0 * scarce) * dt) as f32;
             nloss[i] = (n_min[i] as f64 * (1.0 - (-N_LOSS_PER_YR * dt).exp())) as f32;
-            sorb[i] = (p_min[i] as f64 * (1.0 - (-P_SORB_PER_YR * dt).exp())) as f32;
+            sorb[i] = (p_min[i] as f64 * (1.0 - (-P_SORB_PER_YR * dt).exp()) * (1.0 - p_occ[i].max(0.0) as f64 / P_OCC_CAP).max(0.0)) as f32;
             desorb[i] = (p_occ[i] as f64 * (1.0 - (-P_DESORB_PER_YR * dt).exp())) as f32;
             ploss[i] = (p_min[i] as f64 * (1.0 - (-P_LOSS_PER_YR * dt).exp())) as f32;
         }
@@ -144,7 +152,7 @@ pub fn initial_pools(t_ann_c: f64, precip_mm: f64) -> [f32; 4] {
     let cold = (1.0 + (10.0 - t_ann_c).max(0.0) / 8.0).min(4.0);
     let wet = (precip_mm / 800.0).clamp(0.3, 1.8);
     let base = cold * wet;
-    [(0.4 * wet) as f32, (0.8 * base) as f32, (5.0 * base) as f32, (3.0 * base) as f32]
+    [(0.2 * wet) as f32, (0.8 * base) as f32, (5.3 * base) as f32, (7.0 * base) as f32]
 }
 
 #[cfg(test)]

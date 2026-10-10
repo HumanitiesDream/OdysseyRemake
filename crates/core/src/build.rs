@@ -174,7 +174,7 @@ pub fn build(s: &Setup) -> Result<Built, String> {
     sim.world.stock_mut(ph.amoc_s)[0] = crate::amoc::S0;
     sim.world.stock_mut(ph.enso_t)[0] = crate::variability::ENSO_OFFSET;
     sim.world.stock_mut(ph.enso_h)[0] = crate::variability::ENSO_OFFSET;
-    for v in sim.world.stock_mut(ph.wx_p).iter_mut() { *v = crate::variability::WX_OFFSET; }
+    for v in sim.world.stock_mut(ph.wx_p).iter_mut() { *v = crate::variability::WX_OFFSET + 0.5 * crate::variability::RAIN_SIGMA * crate::variability::RAIN_SIGMA; }
     sim.world.reset_ledger();
     add(&mut sim, "quakes", Box::new(Quakes::new(env.clone(), hz.clone())))?;
     add(&mut sim, "volcanoes", Box::new(Volcanoes::new(env.clone(), hz.clone())))?;

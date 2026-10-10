@@ -279,7 +279,7 @@ fn debug_carbon_budget() {
         if k > 0 { b.sim.run_years(step); }
         let v: f64 = veg.iter().map(|s| tot(&b, s)).sum();
         let f: f64 = fau.iter().map(|s| tot(&b, s)).sum::<f64>() + tot(&b, "c_plankton");
-        println!("t+{:>5}: air {:.1} veg {:.1} litter {:.1} fast {:.1} slow {:.1} pass {:.1} carcass {:.3} fauna {:.2} surf {:.1} deep {:.1}", step * k, tot(&b, "c_air"), v, tot(&b, "c_litter"), tot(&b, "c_sfast"), tot(&b, "c_sslow"), tot(&b, "c_spass"), tot(&b, "c_carcass"), f, tot(&b, "c_ocean"), tot(&b, "c_deep"));
+        println!("t+{:>5}: air {:.1} veg {:.1} litter {:.1} fast {:.1} slow {:.1} pass {:.1} carcass {:.3} fauna {:.2} surf {:.1} deep {:.1} | Tg: nmin {:.0} norg {:.0} pmin {:.1} porg {:.0} pocc {:.0}", step * k, tot(&b, "c_air"), v, tot(&b, "c_litter"), tot(&b, "c_sfast"), tot(&b, "c_sslow"), tot(&b, "c_spass"), tot(&b, "c_carcass"), f, tot(&b, "c_ocean"), tot(&b, "c_deep"), tot(&b, "n_min") * 1e3, tot(&b, "n_org") * 1e3, tot(&b, "p_min") * 1e3, tot(&b, "p_org") * 1e3, tot(&b, "p_occ") * 1e3);
     }
 }
 
@@ -302,4 +302,120 @@ fn debug_speed() {
     let mut v: Vec<_> = b.sim.timings.clone().unwrap().into_iter().collect();
     v.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
     for (k, t) in v { println!("  {k:>12}: {:.2} s per simulated year", t / 2.0); }
+}
+
+/// Prints the yearly totals of the nitrogen and phosphorus lanes after a spin-up.
+#[test]
+#[ignore]
+fn debug_np_flows() {
+    let mut b = spun(24, 150);
+    b.sim.trace = Some(Default::default());
+    b.sim.run_years(10);
+    for (k, v) in b.sim.trace.as_ref().unwrap() {
+        if k.contains("nfix") || k.contains("nloss") || k.contains("ploss") || k.contains("rockp") || k.contains("n_min") || k.contains("p_min") || k.contains("n_org") && k.contains("[") { println!("{k}: {:.1} Tg/yr", v / 10.0 * 1e6 / 1e9); }
+    }
+}
+
+/// Where does the litter pile up? Prints litter and soil water by latitude band after a long run.
+#[test]
+#[ignore]
+fn debug_litter_map() {
+    let yrs: u64 = std::env::var("YRS").ok().and_then(|v| v.parse().ok()).unwrap_or(400);
+    let mut b = spun(24, 150);
+    b.sim.run_years(yrs);
+    let w = &b.sim.world;
+    let lit = w.stock(w.reg.stock("c_litter").unwrap()); let wl = w.stock(w.reg.stock("w_land").unwrap());
+    let ws = w.stock(w.reg.stock("w_sea").unwrap()); let heat = w.stock(b.env.ph.heat);
+    let area = &w.grid.area_km2;
+    for lo in (-90..90).step_by(15) {
+        let (mut c, mut a, mut wsum, mut tsum, mut nl) = (0f64, 0f64, 0f64, 0f64, 0);
+        for i in 0..lit.len() {
+            let lat = b.env.p.lat_deg[i];
+            if lat < lo as f32 || lat >= (lo + 15) as f32 || (ws[i] > 50.0 && b.env.ocean0[i]) { continue; }
+            c += lit[i] as f64 * area[i] as f64; a += area[i] as f64; wsum += wl[i] as f64 * area[i] as f64; tsum += (b.env.t_from_h(i, heat[i]) - 273.15) as f64 * area[i] as f64; nl += 1;
+        }
+        if a > 0.0 { println!("lat {lo:>4}..{:>3}: tiles {nl:>4} litter {:.2} kgC/m2  total {:.1} PgC  soil water {:.0} mm  T {:.1} C", lo + 15, c / a, c * 1e6 / 1e12, wsum / a, tsum / a); }
+    }
+}
+
+/// Mean land soil water after some years, with modules left out one at a time.
+#[test]
+#[ignore]
+fn debug_leave_one_out() {
+    let all: Vec<String> = ["quakes", "volcanoes", "climate", "seaice", "hydro", "plants", "soilbgc", "fire", "fauna", "sealife", "variability", "amoc", "cyclones", "dispersal", "iceflow", "crust", "airmix", "oceancarbon", "landscape", "sealevel"].iter().map(|s| s.to_string()).collect();
+    for skip in ["none", "cyclones", "variability", "amoc", "fire"] {
+        let mut s = Setup::today(24);
+        s.only = Some(all.iter().filter(|m| m.as_str() != skip).cloned().collect());
+        let mut b = build(&s).unwrap();
+        b.sim.parallel = Parallel::Off;
+        b.sim.run_years(60);
+        let w = &b.sim.world;
+        let wl = w.stock(w.reg.stock("w_land").unwrap()); let ws = w.stock(w.reg.stock("w_sea").unwrap());
+        let (mut sum, mut a) = (0f64, 0f64); let mut mx = 0f32;
+        for i in 0..wl.len() { if ws[i] > 50.0 && b.env.ocean0[i] { continue; } sum += wl[i] as f64 * w.grid.area_km2[i] as f64; a += w.grid.area_km2[i] as f64; mx = mx.max(wl[i]); }
+        println!("without {skip}: mean soil water {:.0} mm, max {:.0} mm, violations {}", sum / a, mx, w.violation_count);
+    }
+}
+
+/// Land water stores over time.
+#[test]
+#[ignore]
+fn debug_water_stores() {
+    let mut b = spun(24, 20);
+    for k in 0..8 {
+        if k > 0 { b.sim.run_years(50); }
+        let w = &b.sim.world;
+        let get = |nm: &str| w.stock(w.reg.stock(nm).unwrap()).to_vec();
+        let (wl, wg, ws) = (get("w_land"), get("w_ground"), get("w_sea"));
+        let area = &w.grid.area_km2;
+        let mut line = format!("yr {:>4}:", 20 + 50 * k);
+        for (lo, hi) in [(-15.0f32, 15.0f32), (30.0, 60.0)] {
+            let (mut sl, mut sg, mut a, mut mx) = (0f64, 0f64, 0f64, 0f32);
+            for i in 0..wl.len() { let lat = b.env.p.lat_deg[i]; if lat < lo || lat >= hi || (ws[i] > 50.0 && b.env.ocean0[i]) { continue; } sl += wl[i] as f64 * area[i] as f64; sg += wg[i] as f64 * area[i] as f64; a += area[i] as f64; mx = mx.max(wl[i]); }
+            line += &format!(" | lat {lo}..{hi}: land {:.0} ground {:.0} max {:.0}", sl / a, sg / a, mx);
+        }
+        println!("{line}");
+    }
+}
+
+/// The tiles that hold the most litter carbon.
+#[test]
+#[ignore]
+fn debug_top_litter() {
+    let mut b = spun(24, 150);
+    b.sim.run_years(200);
+    let w = &b.sim.world;
+    let get = |nm: &str| w.stock(w.reg.stock(nm).unwrap()).to_vec();
+    let (lit, wl, ws, pass) = (get("c_litter"), get("w_land"), get("w_sea"), get("c_spass"));
+    let area = &w.grid.area_km2; let heat = w.stock(b.env.ph.heat);
+    let mut idx: Vec<usize> = (0..lit.len()).filter(|&i| !(ws[i] > 50.0 && b.env.ocean0[i])).collect();
+    idx.sort_by(|&a, &b| (lit[b] * area[b]).partial_cmp(&(lit[a] * area[a])).unwrap());
+    let tot: f64 = idx.iter().map(|&i| lit[i] as f64 * area[i] as f64).sum::<f64>() * 1e6 / 1e12;
+    println!("total litter {tot:.0} PgC over {} land tiles", idx.len());
+    let mut cum = 0.0;
+    for &i in idx.iter().take(25) {
+        cum += lit[i] as f64 * area[i] as f64 * 1e6 / 1e12;
+        println!("tile {i:>5} lat {:>6.1} lon {:>7.1} litter {:>6.2} kgC/m2 pass {:>6.2} w_land {:>8.0} T {:>5.1} cum {:.0}", b.env.p.lat_deg[i], w.grid.lon[i].to_degrees(), lit[i], pass[i], wl[i], b.env.t_from_h(i, heat[i]) - 273.15, cum);
+    }
+}
+
+/// Yearly ice and snow flows, Tt/yr w.e. (1 Gt = 1e12 kg = 1 km3 w.e.), after a short run.
+#[test]
+#[ignore]
+fn debug_ice_flows() {
+    let mut b = spun(24, 20);
+    b.sim.trace = Some(Default::default());
+    b.sim.run_years(5);
+    let mut rows: Vec<(String, f64)> = b.sim.trace.as_ref().unwrap().iter().filter(|(k, _)| k.contains("w_ice") || k.contains("w_snow") || k.contains("[melt]")).map(|(k, v)| (k.clone(), v / 5.0 / 1e6)).collect();
+    let agg = |pre: &str, from: &str, to: &str| -> f64 { rows.iter().filter(|(k, _)| k.starts_with(pre) && { let (a, b) = k.split_once(": ").unwrap().1.split_once(" > ").unwrap(); a.starts_with(from) && b.starts_with(to) }).map(|(_, v)| v).sum() };
+    println!("snow in (air>snow): {:.0}", agg("hydro", "w_air", "w_snow"));
+    println!("snow to ice (snow>ice): {:.0}", agg("hydro", "w_snow", "w_ice"));
+    println!("air to ice directly: {:.0}", agg("hydro", "w_air", "w_ice"));
+    println!("snow melt (snow>land): {:.0}", agg("hydro", "w_snow", "w_land"));
+    println!("ice melt (ice>land): {:.0}", agg("hydro", "w_ice", "w_land"));
+    println!("ice to sea in hydro: {:.0}", agg("hydro", "w_ice", "w_sea"));
+    println!("iceflow ice>sea (calving): {:.0}", agg("iceflow", "w_ice", "w_sea"));
+    println!("iceflow ice>ice (sliding): {:.0}", agg("iceflow", "w_ice", "w_ice"));
+    println!("snow>sea: {:.0}", agg("hydro", "w_snow", "w_sea"));
+    println!("all other ice rows:"); for (k, v) in rows.iter().filter(|(k, _)| k.contains("w_ice") && !k.starts_with("hydro: w_ice") && !k.starts_with("iceflow")).take(10) { println!("  {k}: {v:.0}"); }
 }

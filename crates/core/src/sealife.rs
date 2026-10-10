@@ -59,7 +59,7 @@ impl Module for SeaLife {
     }
     fn step(&mut self, ctx: &StepCtx, view: &View, out: &mut FlowOut) -> Result<(), WorldError> {
         let ids = self.ids.as_ref().ok_or_else(|| WorldError::Unknown("sealife not bound".into()))?;
-        if self.table.as_ref().map_or(true, |t| (ctx.year - t.year).abs() >= 100) { self.table = Some(InsolTable::build(ctx.year)); }
+        if self.table.as_ref().map_or(true, |t| t.year != InsolTable::block_year(ctx.year)) { self.table = Some(InsolTable::build(InsolTable::block_year(ctx.year))); }
         let table = self.table.as_ref().unwrap();
         let (env, gs, eco) = (&self.env, &self.gs, &self.eco);
         let n = env.n();
