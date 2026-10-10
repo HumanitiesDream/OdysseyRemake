@@ -5,10 +5,16 @@
 //! on both sides, so nothing appears or vanishes. See `docs/ENGINE.md`.
 
 pub mod content;
+pub mod build;
+pub mod climate;
 pub mod demo;
+pub mod earth;
+pub mod env;
 pub mod flows;
 pub mod grid;
 pub mod module;
+pub mod orbit;
+pub mod planet;
 pub mod rng;
 pub mod save;
 pub mod sim;

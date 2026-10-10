@@ -9,14 +9,15 @@ pub struct BoundaryId(pub u16);
 
 /// What a stock is made of. A flow may only move amounts inside one group.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
-pub enum Group { Water, Heat, Carbon, Nitrogen, Phosphorus, Sediment }
+pub enum Group { Water, Heat, Carbon, Nitrogen, Phosphorus, Sediment, Crust }
 
-pub const GROUPS: [Group; 6] = [Group::Water, Group::Heat, Group::Carbon, Group::Nitrogen, Group::Phosphorus, Group::Sediment];
+pub const NGROUPS: usize = 7;
+pub const GROUPS: [Group; NGROUPS] = [Group::Water, Group::Heat, Group::Carbon, Group::Nitrogen, Group::Phosphorus, Group::Sediment, Group::Crust];
 
 impl Group {
     pub fn idx(self) -> usize { self as usize }
     pub fn name(self) -> &'static str {
-        match self { Group::Water => "water", Group::Heat => "heat", Group::Carbon => "carbon", Group::Nitrogen => "nitrogen", Group::Phosphorus => "phosphorus", Group::Sediment => "sediment" }
+        match self { Group::Water => "water", Group::Heat => "heat", Group::Carbon => "carbon", Group::Nitrogen => "nitrogen", Group::Phosphorus => "phosphorus", Group::Sediment => "sediment", Group::Crust => "crust" }
     }
 }
 

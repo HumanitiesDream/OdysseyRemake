@@ -111,17 +111,19 @@ impl Sim {
             }
         }
 
+        let mut good: Vec<FlowOut> = Vec::new();
         for (i, outcome) in outcomes {
             let verdict = outcome.and_then(|out| self.world.validate(&self.slots[i].res, &out).map(|_| out));
             match verdict {
-                Ok(out) => self.world.accumulate(&out),
+                Ok(out) => good.push(out),
                 Err(e) => {
                     self.skipped += 1;
                     if self.world.log.len() < 1000 { self.world.log.push(format!("month {}: {}", month, e)); }
                 }
             }
         }
-        self.world.commit();
+        let refs: Vec<&FlowOut> = good.iter().collect();
+        self.world.apply(&refs);
         self.world.clock.month_index += 1;
     }
 

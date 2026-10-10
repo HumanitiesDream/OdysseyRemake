@@ -28,6 +28,9 @@ pub struct Entry {
 pub struct FlowOut {
     /// Keyed by (from, to). A BTreeMap keeps the apply order the same on every run.
     pub(crate) lanes: BTreeMap<(Endpoint, Endpoint), Vec<Entry>>,
+    /// Same-tile flows as one density per tile, for modules that touch every tile.
+    /// The same f32 leaves one stock and enters the other, so these close exactly.
+    pub(crate) dense: BTreeMap<(Endpoint, Endpoint), Vec<f32>>,
     pub(crate) bad: u32,
 }
 
@@ -52,8 +55,18 @@ impl FlowOut {
         self.push(Endpoint::Stock(stock), Endpoint::Stock(stock), src, dst, amount);
     }
 
-    pub fn is_empty(&self) -> bool { self.lanes.is_empty() }
-    pub fn entry_count(&self) -> usize { self.lanes.values().map(|v| v.len()).sum() }
+    /// A per-tile lane of density flow (in the stocks' unit) from `from` to `to` on each tile.
+    /// Write non-negative numbers into it. Both ends need a stock on the same tile, except
+    /// that one end may be a boundary account. Allocated zeroed on first use.
+    pub fn dense(&mut self, from: Endpoint, to: Endpoint, tiles: usize) -> &mut [f32] {
+        self.dense.entry((from, to)).or_insert_with(|| vec![0f32; tiles])
+    }
+    pub fn dense_local(&mut self, from: StockId, to: StockId, tiles: usize) -> &mut [f32] {
+        self.dense(Endpoint::Stock(from), Endpoint::Stock(to), tiles)
+    }
+
+    pub fn is_empty(&self) -> bool { self.lanes.is_empty() && self.dense.is_empty() }
+    pub fn entry_count(&self) -> usize { self.lanes.values().map(|v| v.len()).sum::<usize>() + self.dense.values().map(|v| v.iter().filter(|&&x| x != 0.0).count()).sum::<usize>() }
     pub fn gross(&self) -> f64 { self.lanes.values().flat_map(|v| v.iter()).map(|e| e.amount).sum() }
 }
 
