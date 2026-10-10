@@ -66,7 +66,7 @@ pub struct Hydro {
     rt: Option<Routing>,
 }
 struct Ids {
-    runoff_y: StockId, heat: StockId, w_air: StockId, w_sea: StockId, w_land: StockId, w_ground: StockId,
+    runoff_y: StockId, wx_p: StockId, heat: StockId, w_air: StockId, w_sea: StockId, w_land: StockId, w_ground: StockId,
     snow: Vec<StockId>, ice: Vec<StockId>,
     rock: StockId, reg: StockId, sg: StockId, ss: StockId, sm: StockId, defl: StockId,
 }
@@ -77,7 +77,7 @@ impl Hydro {
 
 impl Module for Hydro {
     fn spec(&self) -> ModuleSpec {
-        let mut reads: Vec<String> = ["heat", "veg_ref", "w_sea", "w_land", "w_ground", "rock", "reg", "sed_g", "sed_s", "sed_m", "defl"].iter().map(|s| s.to_string()).collect();
+        let mut reads: Vec<String> = ["heat", "veg_ref", "wx_p", "w_sea", "w_land", "w_ground", "rock", "reg", "sed_g", "sed_s", "sed_m", "defl"].iter().map(|s| s.to_string()).collect();
         let mut writes: Vec<String> = ["w_air", "w_sea", "w_land", "w_ground", "runoff_y"].iter().map(|s| s.to_string()).collect();
         for b in 0..BANDS { for k in ["w_snow", "w_ice"] { reads.push(format!("{k}{b}")); writes.push(format!("{k}{b}")); } }
         for t in &self.set.types { reads.push(format!("c_leaf_{}", t.id)); }
@@ -89,7 +89,7 @@ impl Module for Hydro {
     fn bind(&mut self, reg: &Registry, _: &Grid) -> Result<(), WorldError> {
         let g = |n: &str| reg.stock(n).ok_or_else(|| WorldError::Unknown(n.into()));
         self.ids = Some(Ids {
-            runoff_y: g("runoff_y")?, heat: g("heat")?, w_air: g("w_air")?, w_sea: g("w_sea")?, w_land: g("w_land")?, w_ground: g("w_ground")?,
+            runoff_y: g("runoff_y")?, wx_p: g("wx_p")?, heat: g("heat")?, w_air: g("w_air")?, w_sea: g("w_sea")?, w_land: g("w_land")?, w_ground: g("w_ground")?,
             snow: (0..BANDS).map(|b| g(&format!("w_snow{b}"))).collect::<Result<_, _>>()?,
             ice: (0..BANDS).map(|b| g(&format!("w_ice{b}"))).collect::<Result<_, _>>()?,
             rock: g("rock")?, reg: g("reg")?, sg: g("sed_g")?, ss: g("sed_s")?, sm: g("sed_m")?, defl: g("defl")?,
@@ -107,6 +107,7 @@ impl Module for Hydro {
         if self.insol.as_ref().map_or(true, |t| (t.year - ctx.year).abs() >= 25) { self.insol = Some(InsolTable::build(ctx.year)); }
         let insol = self.insol.as_ref().unwrap();
 
+        let wx = view.stock(ids.wx_p)?;
         let heat = view.stock(ids.heat)?;
         let w_sea = view.stock(ids.w_sea)?;
         let w_land = view.stock(ids.w_land)?;
@@ -194,7 +195,7 @@ impl Module for Hydro {
                 let sla: Vec<f32> = set.types.iter().map(|t| t.sla).collect();
                 (1.0 + RECYCLE * (crate::eco::cover_of(&sla, &l) - (veg_ref[i] - 1.0))).clamp(0.5, 1.5)
             } else { 1.0 };
-            let p_tile = prec[i] * (P_PER_K * theta).exp() * recycle;
+            let p_tile = prec[i] * (P_PER_K * theta).exp() * recycle * (wx[i] - crate::variability::WX_OFFSET - 0.5 * crate::variability::RAIN_SIGMA * crate::variability::RAIN_SIGMA).exp();
             p_land_tile[i] = p_tile;
             sum_p_land += p_tile as f64 * a;
             let pet = pet_oudin(q, t_mean - 273.15) * days;

@@ -26,7 +26,7 @@ pub struct Entry {
 
 /// What happened, as a readout. Never a cause: events are written down after the stocks moved.
 #[derive(Copy, Clone, Debug, PartialEq)]
-pub enum EventKind { Quake, Tsunami, Eruption, Landslide, Fire, Flood, LakeBurst, Storm, Drought, Calving, Crash, Outbreak }
+pub enum EventKind { Quake, Tsunami, Eruption, Landslide, Fire, Flood, LakeBurst, Storm, Drought, Calving, Crash, Outbreak, StormBirth }
 
 #[derive(Copy, Clone, Debug)]
 pub struct Event { pub month: u64, pub kind: EventKind, pub tile: u32, pub size: f32 }

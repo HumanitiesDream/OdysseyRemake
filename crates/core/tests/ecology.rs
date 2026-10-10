@@ -282,3 +282,24 @@ fn debug_carbon_budget() {
         println!("t+{:>5}: air {:.1} veg {:.1} litter {:.1} fast {:.1} slow {:.1} pass {:.1} carcass {:.3} fauna {:.2} surf {:.1} deep {:.1}", step * k, tot(&b, "c_air"), v, tot(&b, "c_litter"), tot(&b, "c_sfast"), tot(&b, "c_sslow"), tot(&b, "c_spass"), tot(&b, "c_carcass"), f, tot(&b, "c_ocean"), tot(&b, "c_deep"));
     }
 }
+
+/// How long a simulated year takes at a size, with and without threads.
+#[test]
+#[ignore]
+fn debug_speed() {
+    let n: u32 = std::env::var("N").ok().and_then(|v| v.parse().ok()).unwrap_or(48);
+    for par in [Parallel::Off, Parallel::Auto(1)] {
+        let mut b = build(&Setup::today(n)).unwrap();
+        b.sim.parallel = par;
+        let t = std::time::Instant::now();
+        b.sim.run_years(3);
+        println!("n{n} {:?}: {:.2} s per simulated year", par, t.elapsed().as_secs_f64() / 3.0);
+    }
+    let mut b = build(&Setup::today(n)).unwrap();
+    b.sim.parallel = Parallel::Off;
+    b.sim.timings = Some(Default::default());
+    b.sim.run_years(2);
+    let mut v: Vec<_> = b.sim.timings.clone().unwrap().into_iter().collect();
+    v.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
+    for (k, t) in v { println!("  {k:>12}: {:.2} s per simulated year", t / 2.0); }
+}

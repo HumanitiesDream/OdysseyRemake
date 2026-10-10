@@ -26,6 +26,8 @@ impl Rng {
     }
     pub fn next_u64(&mut self) -> u64 { self.0 = self.0.wrapping_add(0x9E37_79B9_7F4A_7C15); mix(self.0) }
     /// Uniform in [0, 1).
+    /// Standard normal by the Box-Muller method.
+    pub fn normal(&mut self) -> f64 { let u = self.f64().max(1e-300); let v = self.f64(); (-2.0 * u.ln()).sqrt() * (2.0 * std::f64::consts::PI * v).cos() }
     pub fn f64(&mut self) -> f64 { (self.next_u64() >> 11) as f64 / (1u64 << 53) as f64 }
 }
 

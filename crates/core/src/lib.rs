@@ -6,9 +6,11 @@
 
 pub mod content;
 pub mod build;
+pub mod amoc;
 pub mod carbon;
 pub mod climate;
 pub mod crust;
+pub mod cyclones;
 pub mod dispersal;
 pub mod demo;
 pub mod earth;
@@ -35,6 +37,7 @@ pub mod soilbgc;
 pub mod sim;
 pub mod stocks;
 pub mod units;
+pub mod variability;
 pub mod world;
 
 pub use flows::{Endpoint, Event, EventKind, FlowOut};

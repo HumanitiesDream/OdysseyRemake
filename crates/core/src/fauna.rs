@@ -108,7 +108,7 @@ impl Module for Fauna {
             for _s in 0..SUB {
                 for g in 0..ng {
                     let gd = &gs.guilds[g];
-                    if b[g] <= 0.0 { continue; }
+                    if b[g] <= 1e-10 { continue; }
                     let mut gain_c = 0.0; // carbon eaten this sub-step
                     // plants
                     if !gd.plants.is_empty() {
@@ -157,7 +157,7 @@ impl Module for Fauna {
                 // upkeep, deaths, rot
                 for g in 0..ng {
                     let gd = &gs.guilds[g];
-                    if b[g] <= 0.0 { continue; }
+                    if b[g] <= 1e-10 { continue; }
                     let q10 = if gd.endotherm { 1.0 } else { 2f64.powf((t_c - 20.0) / 10.0).clamp(0.05, 3.0) };
                     let dis = 0.4 * (b[g] / gs.disease as f64).powi(2).min(4.0);
                     if dis > 0.1 { disease_hit = true; }
@@ -253,7 +253,7 @@ impl Module for Fauna {
                     let w = (attract[j][g] - attract[i][g]).max(0.0);
                     ws[k] = w; wsum += w;
                 }
-                if wsum <= 0.0 { continue; }
+                if wsum <= 0.0 || b_end[i][g] < 1e-8 { continue; }
                 let frac = (gd.move_km as f64 / env.p.tile_km[i] as f64).min(0.4) * 0.9;
                 let giving = b_end[i][g] as f64 * frac;
                 for (k, j) in grid.nbr[i].iter().enumerate() {

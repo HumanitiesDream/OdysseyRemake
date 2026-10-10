@@ -157,7 +157,7 @@ impl Module for SeaLife {
                 for j in grid.neighbours(i) {
                     if !ocean[j] { continue; }
                     let dv = v - vals[j].max(0.0) as f64;
-                    if dv <= 0.0 { continue; }
+                    if dv <= 1e-8 { continue; }
                     let amt = ratio * MIX_RATE * dt * dv / 6.0 * area[i] as f64;
                     out.push(Endpoint::Stock(stock), Endpoint::Stock(stock), i, j, amt);
                     if stock != eco.p_sea { out.push(Endpoint::Stock(eco.p_marine), Endpoint::Stock(eco.p_marine), i, j, amt / CP_SEA); }

@@ -94,6 +94,14 @@ pub struct Phys {
     pub veg_ref: StockId,
     /// tiles whose fire front burns on into the next month (1 or 0)
     pub fire: StockId,
+    /// log-anomaly of the month's rain (weather and ENSO), read by hydro
+    pub wx_p: StockId,
+    /// ENSO recharge oscillator: warm-pool temperature anomaly (K) and heat content (K), on tile 0
+    pub enso_t: StockId,
+    pub enso_h: StockId,
+    /// AMOC salinity contrast (dimensionless, on tile 0) and the northern ice volume last month
+    pub amoc_s: StockId,
+    pub amoc_ice: StockId,
     // outside accounts
     pub b_sun: BoundaryId,
     pub b_space: BoundaryId,
@@ -109,6 +117,7 @@ pub struct Phys {
     pub b_plates: BoundaryId,
     pub b_rupture: BoundaryId,
     pub b_melt: BoundaryId,
+    pub b_weather: BoundaryId,
 }
 
 impl Phys {
@@ -142,9 +151,14 @@ impl Phys {
         let aerosol = reg.add_stock("aerosol", "Mt/km2", Group::Diag, Storage::Exact);
         let veg_ref = reg.add_stock("veg_ref", "1", Group::Diag, Storage::Exact);
         let fire = reg.add_stock("fire", "1", Group::Diag, Storage::Sparse);
+        let wx_p = reg.add_stock("wx_p", "1", Group::Diag, Storage::Exact);
+        let enso_t = reg.add_stock("enso_t", "K", Group::Diag, Storage::Sparse);
+        let enso_h = reg.add_stock("enso_h", "K", Group::Diag, Storage::Sparse);
+        let amoc_s = reg.add_stock("amoc_s", "1", Group::Diag, Storage::Sparse);
+        let amoc_ice = reg.add_stock("amoc_ice", "mm km2", Group::Diag, Storage::Sparse);
         Phys {
             w_sea, w_seaice, w_air, w_land, w_ground, w_snow, w_ice, heat, heat_deep, c_air, c_ocean, c_deep,
-            rock, reg: regl, sed_g, sed_s, sed_m, defl, runoff_y, strain, magma, aerosol, veg_ref, fire,
+            rock, reg: regl, sed_g, sed_s, sed_m, defl, runoff_y, strain, magma, aerosol, veg_ref, fire, wx_p, enso_t, enso_h, amoc_s, amoc_ice,
             b_sun: reg.add_boundary("sun", Group::Heat),
             b_space: reg.add_boundary("space", Group::Heat),
             b_season: reg.add_boundary("season", Group::Heat),
@@ -159,6 +173,7 @@ impl Phys {
             b_plates: reg.add_boundary("plates", Group::Crust),
             b_rupture: reg.add_boundary("rupture", Group::Crust),
             b_melt: reg.add_boundary("melt", Group::Sediment),
+            b_weather: reg.add_boundary("weather", Group::Heat),
         }
     }
 

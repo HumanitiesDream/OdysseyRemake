@@ -171,6 +171,10 @@ pub fn build(s: &Setup) -> Result<Built, String> {
     let hz = Arc::new(HazardMap::load(&grid, &data_dir().join("hazards"))?);
     sim.world.stock_mut(ph.strain).copy_from_slice(&hz.initial_strain(&grid, s.seed));
     sim.world.stock_mut(ph.magma).copy_from_slice(&hz.initial_magma(s.seed));
+    sim.world.stock_mut(ph.amoc_s)[0] = crate::amoc::S0;
+    sim.world.stock_mut(ph.enso_t)[0] = crate::variability::ENSO_OFFSET;
+    sim.world.stock_mut(ph.enso_h)[0] = crate::variability::ENSO_OFFSET;
+    for v in sim.world.stock_mut(ph.wx_p).iter_mut() { *v = crate::variability::WX_OFFSET; }
     sim.world.reset_ledger();
     add(&mut sim, "quakes", Box::new(Quakes::new(env.clone(), hz.clone())))?;
     add(&mut sim, "volcanoes", Box::new(Volcanoes::new(env.clone(), hz.clone())))?;
@@ -182,6 +186,9 @@ pub fn build(s: &Setup) -> Result<Built, String> {
     add(&mut sim, "fire", Box::new(Fire::new(env.clone(), set.clone(), eco.clone())))?;
     add(&mut sim, "fauna", Box::new(crate::fauna::Fauna::new(env.clone(), set.clone(), guilds.clone(), eco.clone())))?;
     add(&mut sim, "sealife", Box::new(crate::sealife::SeaLife::new(env.clone(), guilds.clone(), eco.clone())))?;
+    add(&mut sim, "variability", Box::new(crate::variability::Variability::new(env.clone())))?;
+    add(&mut sim, "amoc", Box::new(crate::amoc::Amoc::new(env.clone())))?;
+    add(&mut sim, "cyclones", Box::new(crate::cyclones::Cyclones::new(env.clone())))?;
     add(&mut sim, "dispersal", Box::new(Dispersal::new(env.clone(), set.clone(), eco.clone())))?;
     add(&mut sim, "iceflow", Box::new(IceFlow::new(env.clone())))?;
     add(&mut sim, "crust", Box::new(Crust::new(env.clone(), base_load)))?;

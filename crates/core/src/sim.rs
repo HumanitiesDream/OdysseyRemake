@@ -41,12 +41,14 @@ pub struct Sim {
     pub skipped: u64,
     /// When set, running totals of every flow lane by module, in (density unit x km2). For diagnosis.
     pub trace: Option<std::collections::BTreeMap<String, f64>>,
+    /// When set, seconds spent in each module's step. For finding slow modules.
+    pub timings: Option<std::collections::BTreeMap<String, f64>>,
 }
 
-type Outcome = (usize, Result<FlowOut, WorldError>);
+type Outcome = (usize, Result<FlowOut, WorldError>, f64);
 
 impl Sim {
-    pub fn new(world: World) -> Sim { Sim { world, slots: Vec::new(), parallel: Parallel::Auto(5000), detail: Detail::Full, skipped: 0, trace: None } }
+    pub fn new(world: World) -> Sim { Sim { world, slots: Vec::new(), parallel: Parallel::Auto(5000), detail: Detail::Full, skipped: 0, trace: None, timings: None } }
 
     pub fn add_module(&mut self, mut module: Box<dyn Module>) -> Result<(), WorldError> {
         let spec = module.spec();
@@ -93,11 +95,13 @@ impl Sim {
                 let view = View { world, allowed: &slot.res.reads, module: &slot.res.name };
                 let name = slot.res.name.clone();
                 let mut out = FlowOut::new();
+                let t0 = std::time::Instant::now();
                 let r = catch_unwind(AssertUnwindSafe(|| slot.module.step(&ctx, &view, &mut out)));
+                let secs = t0.elapsed().as_secs_f64();
                 match r {
-                    Ok(Ok(())) => (i, Ok(out)),
-                    Ok(Err(e)) => (i, Err(e)),
-                    Err(_) => (i, Err(WorldError::Panicked { module: name })),
+                    Ok(Ok(())) => (i, Ok(out), secs),
+                    Ok(Err(e)) => (i, Err(e), secs),
+                    Err(_) => (i, Err(WorldError::Panicked { module: name }), secs),
                 }
             };
 
@@ -105,7 +109,7 @@ impl Sim {
                 std::thread::scope(|sc| {
                     let handles: Vec<_> = picked.into_iter().map(|(i, slot)| { let run = &run; sc.spawn(move || run(i, slot)) }).collect();
                     for (h, &i) in handles.into_iter().zip(due.iter()) {
-                        outcomes.push(h.join().unwrap_or_else(|_| (i, Err(WorldError::Panicked { module: "thread".into() }))));
+                        outcomes.push(h.join().unwrap_or_else(|_| (i, Err(WorldError::Panicked { module: "thread".into() }), 0.0)));
                     }
                 });
             } else {
@@ -114,7 +118,8 @@ impl Sim {
         }
 
         let mut good: Vec<FlowOut> = Vec::new();
-        for (i, outcome) in outcomes {
+        for (i, outcome, secs) in outcomes {
+            if let Some(t) = self.timings.as_mut() { *t.entry(self.slots[i].res.name.clone()).or_insert(0.0) += secs; }
             let verdict = outcome.and_then(|out| self.world.validate(&self.slots[i].res, &out).map(|_| out));
             match verdict {
                 Ok(out) => {
