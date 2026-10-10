@@ -1,0 +1,16 @@
+[package]
+name = "odyssey-core"
+version = "0.1.0"
+edition = "2021"
+description = "Odyssey rebuild, stage 1: grid, stocks, flows, scheduler, content, saves."
+
+[lib]
+name = "odyssey_core"
+
+[[bin]]
+name = "world"
+path = "src/bin/world.rs"
+
+[dependencies]
+serde_json = "1"
+flate2 = "1"

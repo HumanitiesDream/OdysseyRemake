@@ -1,0 +1,14 @@
+{
+  "kind": "disaster_stocks",
+  "version": 1,
+  "items": [
+    { "id": "fault_strain", "name": "Fault strain", "fills_from": "plate motion at real slip rates", "empties_in": "earthquakes", "source": "REDESIGN-PLAN.md, Disasters table" },
+    { "id": "magma", "name": "Magma", "fills_from": "supply at depth", "empties_in": "eruptions", "source": "REDESIGN-PLAN.md, Disasters table" },
+    { "id": "fuel", "name": "Fuel", "fills_from": "plant growth and dead matter", "empties_in": "fires", "source": "REDESIGN-PLAN.md, Disasters table" },
+    { "id": "sea_heat", "name": "Sea heat", "fills_from": "sunlight", "empties_in": "tropical storms", "source": "REDESIGN-PLAN.md, Disasters table" },
+    { "id": "lake_behind_dam", "name": "Lake water behind ice or landslides", "fills_from": "melt and rain", "empties_in": "dam bursts", "source": "REDESIGN-PLAN.md, Disasters table" },
+    { "id": "snowpack", "name": "Snowpack", "fills_from": "snowfall", "empties_in": "avalanches and spring floods", "source": "REDESIGN-PLAN.md, Disasters table" },
+    { "id": "slope_water_soil", "name": "Slope water and soil", "fills_from": "rain, weathering", "empties_in": "landslides", "source": "REDESIGN-PLAN.md, Disasters table" },
+    { "id": "pathogens", "name": "Insects and pathogens", "fills_from": "stressed or crowded hosts", "empties_in": "outbreaks, then burnout and immunity", "source": "REDESIGN-PLAN.md, Disasters table" }
+  ]
+}

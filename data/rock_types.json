@@ -1,0 +1,23 @@
+{
+  "kind": "rock_types",
+  "version": 1,
+  "note": "Classes only. Hardness and weathering rates are not filled in: the plan lists erodibility data as a gap to close (REDESIGN-PLAN.md, More geology gaps, point 3). Add them with a published source each.",
+  "items": [
+    { "id": "su", "name": "Unconsolidated sediment", "source": "GLiM lithology classes (Hartmann and Moosdorf 2012), class list from memory, check before use" },
+    { "id": "ss", "name": "Siliciclastic sedimentary", "source": "GLiM, from memory" },
+    { "id": "sm", "name": "Mixed sedimentary", "source": "GLiM, from memory" },
+    { "id": "sc", "name": "Carbonate sedimentary", "source": "GLiM, from memory" },
+    { "id": "py", "name": "Pyroclastic", "source": "GLiM, from memory" },
+    { "id": "va", "name": "Acid volcanic", "source": "GLiM, from memory" },
+    { "id": "vi", "name": "Intermediate volcanic", "source": "GLiM, from memory" },
+    { "id": "vb", "name": "Basic volcanic", "source": "GLiM, from memory" },
+    { "id": "pa", "name": "Acid plutonic", "source": "GLiM, from memory" },
+    { "id": "pi", "name": "Intermediate plutonic", "source": "GLiM, from memory" },
+    { "id": "pb", "name": "Basic plutonic", "source": "GLiM, from memory" },
+    { "id": "mt", "name": "Metamorphic", "source": "GLiM, from memory" },
+    { "id": "ev", "name": "Evaporite", "source": "GLiM, from memory" },
+    { "id": "ig", "name": "Ice and glaciers", "source": "GLiM, from memory" },
+    { "id": "wb", "name": "Water body", "source": "GLiM, from memory" },
+    { "id": "nd", "name": "No data", "source": "GLiM, from memory" }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "kind": "plant_types",
+  "version": 1,
+  "items": [
+    { "id": "tropical_evergreen", "name": "Tropical evergreen tree", "source": "REDESIGN-PLAN.md, Ecology, rebuild point 1 (after Sitch et al. 2003, LPJ)" },
+    { "id": "tropical_dry", "name": "Tropical dry-season tree", "source": "REDESIGN-PLAN.md, Ecology, rebuild point 1" },
+    { "id": "temperate_broadleaf", "name": "Temperate broadleaf tree", "source": "REDESIGN-PLAN.md, Ecology, rebuild point 1" },
+    { "id": "temperate_needle", "name": "Temperate needleleaf tree", "source": "REDESIGN-PLAN.md, Ecology, rebuild point 1" },
+    { "id": "boreal_needle", "name": "Boreal needleleaf tree", "source": "REDESIGN-PLAN.md, Ecology, rebuild point 1" },
+    { "id": "boreal_summergreen", "name": "Boreal summergreen tree", "source": "REDESIGN-PLAN.md, Ecology, rebuild point 1" },
+    { "id": "shrub", "name": "Shrub", "source": "REDESIGN-PLAN.md, Ecology, rebuild point 1" },
+    { "id": "c3_grass", "name": "C3 grass", "source": "REDESIGN-PLAN.md, Ecology, rebuild point 1" },
+    { "id": "c4_grass", "name": "C4 grass", "source": "REDESIGN-PLAN.md, Ecology, rebuild point 1" },
+    { "id": "moss_lichen", "name": "Moss and lichen", "source": "REDESIGN-PLAN.md, Ecology, rebuild point 1" }
+  ]
+}

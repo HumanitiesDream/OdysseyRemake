@@ -1,0 +1,27 @@
+{
+  "kind": "animal_guilds",
+  "version": 1,
+  "pools": [
+    { "id": "carcass", "name": "Carcasses", "source": "REDESIGN-PLAN.md, Ecology, the food web" },
+    { "id": "dung", "name": "Dung", "source": "REDESIGN-PLAN.md, Ecology, the food web" },
+    { "id": "litter", "name": "Plant litter", "source": "REDESIGN-PLAN.md, Ecology, the food web" },
+    { "id": "plankton", "name": "Plankton", "source": "REDESIGN-PLAN.md, Ecology, rebuild point 7" },
+    { "id": "seeds", "name": "Seeds", "source": "REDESIGN-PLAN.md, Ecology, the food web" }
+  ],
+  "items": [
+    { "id": "megaherbivore", "name": "Megaherbivores", "eats": ["plant:c3_grass", "plant:c4_grass", "plant:shrub", "plant:temperate_broadleaf"], "source": "REDESIGN-PLAN.md, food web table (grass, browse, trees pushed over)" },
+    { "id": "large_grazer", "name": "Large grazers", "eats": ["plant:c3_grass", "plant:c4_grass"], "source": "REDESIGN-PLAN.md, food web table (grazers eat grass)" },
+    { "id": "medium_grazer", "name": "Medium grazers", "eats": ["plant:c3_grass", "plant:c4_grass"], "source": "REDESIGN-PLAN.md, food web table" },
+    { "id": "large_browser", "name": "Large browsers", "eats": ["plant:shrub", "plant:temperate_broadleaf", "plant:boreal_summergreen"], "source": "REDESIGN-PLAN.md, food web table (browsers eat shrub and tree leaves, seedlings)" },
+    { "id": "medium_browser", "name": "Medium browsers", "eats": ["plant:shrub", "plant:temperate_broadleaf", "plant:boreal_summergreen"], "source": "REDESIGN-PLAN.md, food web table" },
+    { "id": "small_herbivore", "name": "Small herbivores", "eats": ["pool:seeds", "plant:c3_grass", "plant:c4_grass"], "source": "REDESIGN-PLAN.md, food web table (seeds, grass, roots)" },
+    { "id": "insect", "name": "Insects", "eats": ["plant:temperate_broadleaf", "pool:dung", "pool:litter"], "source": "REDESIGN-PLAN.md, food web table (leaves, wood, dung, litter)" },
+    { "id": "insectivore", "name": "Insectivores", "eats": ["guild:insect", "pool:seeds"], "source": "REDESIGN-PLAN.md, food web table" },
+    { "id": "bird", "name": "Birds", "eats": ["guild:insect", "pool:seeds"], "source": "REDESIGN-PLAN.md, food web table (insectivores and birds)" },
+    { "id": "small_carnivore", "name": "Small carnivores", "eats": ["guild:small_herbivore", "guild:bird", "guild:insect"], "source": "REDESIGN-PLAN.md, food web table (fox, weasel)" },
+    { "id": "medium_carnivore", "name": "Medium carnivores", "eats": ["guild:large_grazer", "guild:medium_grazer", "guild:large_browser", "guild:medium_browser", "guild:small_carnivore"], "source": "REDESIGN-PLAN.md, food web table (wolf, leopard)" },
+    { "id": "large_carnivore", "name": "Large carnivores", "eats": ["guild:megaherbivore", "guild:large_grazer", "guild:large_browser", "guild:medium_carnivore", "guild:fish"], "source": "REDESIGN-PLAN.md, food web table (lion, bear; megaherbivore young only)" },
+    { "id": "scavenger", "name": "Scavengers and decomposers", "eats": ["pool:carcass", "pool:dung", "pool:litter"], "source": "REDESIGN-PLAN.md, food web table" },
+    { "id": "fish", "name": "Fish", "eats": ["pool:plankton", "guild:insect", "guild:fish"], "source": "REDESIGN-PLAN.md, food web table (plankton, insects, smaller fish)" }
+  ]
+}
