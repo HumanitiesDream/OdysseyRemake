@@ -28,6 +28,7 @@ pub mod planet;
 pub mod plants;
 pub mod rng;
 pub mod routing;
+pub mod sealife;
 pub mod save;
 pub mod sea;
 pub mod soilbgc;

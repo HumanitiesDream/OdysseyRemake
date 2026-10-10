@@ -54,9 +54,13 @@ impl Module for AirMix {
     }
 }
 
-pub struct OceanCarbon { env: Env, ids: Option<Ids> }
+pub struct OceanCarbon { env: Env, ids: Option<Ids>, bio_pump: bool }
 struct Ids { air: StockId, surf: StockId, deep: StockId, heat: StockId, sea: StockId }
-impl OceanCarbon { pub fn new(env: Env) -> Self { OceanCarbon { env, ids: None } } }
+impl OceanCarbon {
+    pub fn new(env: Env) -> Self { OceanCarbon { env, ids: None, bio_pump: false } }
+    /// With sea life in the world, the sinking of dead matter is the pump, so the fixed pump term is dropped.
+    pub fn with_sea_life(env: Env) -> Self { OceanCarbon { env, ids: None, bio_pump: true } }
+}
 
 impl Module for OceanCarbon {
     fn spec(&self) -> ModuleSpec { ModuleSpec::new("oceancarbon", Phase::Water).reads(&["c_air", "c_ocean", "c_deep", "heat", "w_sea"]).writes(&["c_air", "c_ocean", "c_deep"]) }
@@ -92,7 +96,7 @@ impl Module for OceanCarbon {
             if flux >= 0.0 { a2s[i] = flux.min(0.5 * c_mean) as f32; } else { s2a[i] = (-flux).min(0.5 * s) as f32; }
             // mixing and pump, baseline at this tile's ice cover
             let open = (1.0 - f_si) / (1.0 - f_si0).max(0.05);
-            let down = (s / TAU_SURF_YR + PUMP0 * open.min(2.0)) * dt;
+            let down = (s / TAU_SURF_YR + if self.bio_pump { 0.0 } else { PUMP0 * open.min(2.0) }) * dt;
             let up = d / TAU_VENT_YR * open.min(2.0) * dt;
             s2d[i] = down.min(0.5 * s) as f32; d2s[i] = up.min(0.5 * d) as f32;
         }

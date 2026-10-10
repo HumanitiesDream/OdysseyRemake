@@ -73,6 +73,7 @@ impl Registry {
         BoundaryId((self.boundaries.len() - 1) as u16)
     }
 
+    pub fn stock_names(&self) -> Vec<String> { self.stocks.iter().map(|s| s.name.clone()).collect() }
     pub fn stock(&self, name: &str) -> Option<StockId> { self.stocks.iter().position(|s| s.name == name).map(|i| StockId(i as u16)) }
     pub fn boundary(&self, name: &str) -> Option<BoundaryId> { self.boundaries.iter().position(|s| s.name == name).map(|i| BoundaryId(i as u16)) }
     pub fn def(&self, id: StockId) -> &StockDef { &self.stocks[id.0 as usize] }

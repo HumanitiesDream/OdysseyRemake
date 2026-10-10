@@ -107,7 +107,14 @@ pub fn build(s: &Setup) -> Result<Built, String> {
     for i in 0..n {
         world.stock_mut(ph.heat)[i] = env.h_from_t(i, env.tobs[0][i]);
         world.stock_mut(ph.heat_deep)[i] = if env.ocean0[i] { HD_OFF } else { 0.0 };
-        if env.ocean0[i] { world.stock_mut(ph.c_ocean)[i] = SURF_DIC as f32; world.stock_mut(ph.c_deep)[i] = DEEP_DIC as f32; }
+        if env.ocean0[i] {
+            world.stock_mut(ph.c_ocean)[i] = SURF_DIC as f32; world.stock_mut(ph.c_deep)[i] = DEEP_DIC as f32;
+            // sea life: a seed of plankton and fish, and the phosphorus the sea starts with (about 0.5 and 2.5 umol/L)
+            let (cp, cs, cl) = (2.0e-3f32, 5.0e-4f32, 1.0e-4f32);
+            world.stock_mut(eco.plankton)[i] = cp; world.stock_mut(eco.sea_fauna[0])[i] = cs; world.stock_mut(eco.sea_fauna[1])[i] = cl;
+            world.stock_mut(eco.p_marine)[i] = (cp + cs + cl) / crate::sealife::CP_SEA as f32;
+            world.stock_mut(eco.p_sea)[i] = crate::sealife::P_SURF0; world.stock_mut(eco.p_deep_sea)[i] = crate::sealife::P_DEEP0;
+        }
         world.stock_mut(ph.c_air)[i] = (s.co2_ppm as f64 / PPM_PER_KGC_M2) as f32;
         world.stock_mut(ph.rock)[i] = rock0[i];
         world.stock_mut(ph.reg)[i] = reg0[i];
@@ -174,13 +181,15 @@ pub fn build(s: &Setup) -> Result<Built, String> {
     add(&mut sim, "soilbgc", Box::new(SoilBgc::new(env.clone(), eco.clone())))?;
     add(&mut sim, "fire", Box::new(Fire::new(env.clone(), set.clone(), eco.clone())))?;
     add(&mut sim, "fauna", Box::new(crate::fauna::Fauna::new(env.clone(), set.clone(), guilds.clone(), eco.clone())))?;
+    add(&mut sim, "sealife", Box::new(crate::sealife::SeaLife::new(env.clone(), guilds.clone(), eco.clone())))?;
     add(&mut sim, "dispersal", Box::new(Dispersal::new(env.clone(), set.clone(), eco.clone())))?;
     add(&mut sim, "iceflow", Box::new(IceFlow::new(env.clone())))?;
     add(&mut sim, "crust", Box::new(Crust::new(env.clone(), base_load)))?;
     let share: Vec<f32> = { let w: Vec<f64> = (0..n).map(|i| hz.magma_m[i] * grid.area_km2[i] as f64).collect(); let sum: f64 = w.iter().sum::<f64>().max(1e-30); w.iter().map(|&x| (x / sum) as f32).collect() };
     if s.spin_up_years > 0 { add(&mut sim, "nudge", Box::new(crate::carbon::Nudge::new(env.clone(), s.co2_ppm as f64, s.spin_up_years * 12)))?; }
     add(&mut sim, "airmix", Box::new(AirMix::new(env.clone())))?;
-    add(&mut sim, "oceancarbon", Box::new(OceanCarbon::new(env.clone())))?;
+    let with_sea = s.only.as_ref().map_or(true, |o| o.iter().any(|m| m == "sealife"));
+    add(&mut sim, "oceancarbon", Box::new(if with_sea { OceanCarbon::with_sea_life(env.clone()) } else { OceanCarbon::new(env.clone()) }))?;
     add(&mut sim, "landscape", Box::new(Landscape::new(env.clone(), share)))?;
     add(&mut sim, "sealevel", Box::new(SeaLevel::new(env.clone())))?;
     Ok(Built { sim, env, spin_up_months: s.spin_up_years * 12 })

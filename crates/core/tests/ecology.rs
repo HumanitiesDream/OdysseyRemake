@@ -237,3 +237,48 @@ fn debug_fauna_report() {
         println!("{line} total={tot:.4} PgC viol={} skipped={} first={:?}", b.sim.world.violation_count, b.sim.skipped, b.sim.world.violations.first());
     }
 }
+
+/// Prints sea life totals and the ocean carbon change.
+#[test]
+#[ignore]
+fn debug_sea_report() {
+    let n: u32 = std::env::var("N").ok().and_then(|v| v.parse().ok()).unwrap_or(24);
+    let yrs: u64 = std::env::var("YRS").ok().and_then(|v| v.parse().ok()).unwrap_or(100);
+    let mut b = spun(n, 150);
+    let area = b.sim.world.grid.area_km2.clone();
+    let lat = b.env.p.lat_deg.clone();
+    let tot = |b: &Built, nm: &str| -> f64 { let s = b.sim.world.stock(b.sim.world.reg.stock(nm).unwrap()); (0..s.len()).map(|i| s[i] as f64 * area[i] as f64 * 1e6).sum::<f64>() / 1e12 };
+    for k in 0..(yrs / 10).max(1) {
+        b.sim.run_years(10);
+        let id = b.sim.world.reg.stock("c_plankton").unwrap();
+        let pl = b.sim.world.stock(id);
+        let (mut eq, mut pol, mut ne, mut na) = (0f64, 0f64, 0f64, 0f64);
+        for i in 0..pl.len() { if lat[i].abs() < 20.0 { eq += pl[i] as f64; ne += 1.0; } else if lat[i].abs() > 60.0 { pol += pl[i] as f64; na += 1.0; } }
+        println!("yr {:>4}: plankton {:.3} fish {:.3} large {:.4} PgC | P surf {:.3e} deep {:.3e} marine {:.3e} Tg | deepC {:.1} PgC airC {:.1} | plankton kgC/m2 tropics {:.4} polar {:.4} | viol {}",
+            20 + 10 * (k + 1), tot(&b, "c_plankton"), tot(&b, "c_fauna_fish"), tot(&b, "c_fauna_large_fish"),
+            tot(&b, "p_sea") * 1e3, tot(&b, "p_deep_sea") * 1e3, tot(&b, "p_marine") * 1e3, tot(&b, "c_deep"), tot(&b, "c_air"), eq / ne.max(1.0), pol / na.max(1.0), b.sim.world.violation_count);
+    }
+    println!("first violation {:?} skipped {} log {:?}", b.sim.world.violations.first(), b.sim.skipped, b.sim.world.log.first());
+}
+
+/// Prints where the carbon is, every 25 years after the spin-up.
+#[test]
+#[ignore]
+fn debug_carbon_budget() {
+    let n: u32 = std::env::var("N").ok().and_then(|v| v.parse().ok()).unwrap_or(24);
+    let spin: u64 = std::env::var("SPIN").ok().and_then(|v| v.parse().ok()).unwrap_or(150);
+    let yrs: u64 = std::env::var("YRS").ok().and_then(|v| v.parse().ok()).unwrap_or(100);
+    let mut b = spun(n, spin);
+    let area = b.sim.world.grid.area_km2.clone();
+    let tot = |b: &Built, nm: &str| -> f64 { let s = b.sim.world.stock(b.sim.world.reg.stock(nm).unwrap()); (0..s.len()).map(|i| s[i] as f64 * area[i] as f64 * 1e6).sum::<f64>() / 1e12 };
+    let names: Vec<String> = b.sim.world.reg.stock_names();
+    let veg: Vec<&String> = names.iter().filter(|s| s.starts_with("c_leaf_") || s.starts_with("c_wood_") || s.starts_with("c_root_")).collect();
+    let fau: Vec<&String> = names.iter().filter(|s| s.starts_with("c_fauna_")).collect();
+    let step: u64 = std::env::var("STEP").ok().and_then(|v| v.parse().ok()).unwrap_or(25);
+    for k in 0..=(yrs / step) {
+        if k > 0 { b.sim.run_years(step); }
+        let v: f64 = veg.iter().map(|s| tot(&b, s)).sum();
+        let f: f64 = fau.iter().map(|s| tot(&b, s)).sum::<f64>() + tot(&b, "c_plankton");
+        println!("t+{:>5}: air {:.1} veg {:.1} litter {:.1} fast {:.1} slow {:.1} pass {:.1} carcass {:.3} fauna {:.2} surf {:.1} deep {:.1}", step * k, tot(&b, "c_air"), v, tot(&b, "c_litter"), tot(&b, "c_sfast"), tot(&b, "c_sslow"), tot(&b, "c_spass"), tot(&b, "c_carcass"), f, tot(&b, "c_ocean"), tot(&b, "c_deep"));
+    }
+}

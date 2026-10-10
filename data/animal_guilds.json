@@ -463,13 +463,42 @@
    "id": "fish",
    "name": "Fish",
    "eats": [
-    "pool:plankton",
-    "guild:insect",
-    "guild:fish"
+    "pool:plankton"
    ],
    "source": "REDESIGN-PLAN.md, food web table (plankton, insects, smaller fish)",
    "body_mass_kg": {
     "value": 1,
+    "source": "assumption (docs/DECISIONS.md): typical body mass of the species that fill this guild",
+    "verified": false,
+    "unit": "kg"
+   },
+   "reach_m": {
+    "value": 0,
+    "source": "assumption: height of the food the guild can reach",
+    "verified": false,
+    "unit": "m"
+   },
+   "move_km_per_month": {
+    "value": 0,
+    "source": "assumption: typical monthly range shift; seasonal migrants go further (docs/DECISIONS.md)",
+    "verified": false,
+    "unit": "km"
+   },
+   "assimilation": {
+    "value": 0.8,
+    "source": "assumption: typical assimilation efficiency of the diet class (herbivores 0.4 to 0.6, carnivores 0.8 to 0.9)",
+    "verified": false
+   }
+  },
+  {
+   "id": "large_fish",
+   "name": "Large fish",
+   "eats": [
+    "guild:fish"
+   ],
+   "source": "REDESIGN-PLAN.md, food web table (fish size classes); body mass is an assumption",
+   "body_mass_kg": {
+    "value": 50,
     "source": "assumption (docs/DECISIONS.md): typical body mass of the species that fill this guild",
     "verified": false,
     "unit": "kg"

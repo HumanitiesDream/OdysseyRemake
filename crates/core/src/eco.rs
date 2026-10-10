@@ -92,6 +92,8 @@ pub struct Guild {
 pub struct GuildSet {
     /// land guilds, in content order without the fish
     pub guilds: Vec<Guild>,
+    /// fish classes, handled by the sea life module
+    pub sea: Vec<Guild>,
     pub k_half: f32,
     pub k_prey: f32,
     pub disease: f32,
@@ -106,7 +108,15 @@ impl GuildSet {
         let cv = |key: &str| consts[key]["value"].as_f64().map(|x| x as f32).ok_or_else(|| format!("animal_guilds constants: no {key}"));
         let (a_i, a_r, a_m, k_half, exp) = (cv("intake_coefficient")?, cv("respiration_coefficient")?, cv("mortality_coefficient")?, cv("half_saturation_food")?, cv("scaling_exponent")?);
         let (k_prey, disease) = (cv("half_saturation_prey")?, cv("disease_density")?);
-        let land: Vec<&Value> = f.items.iter().filter(|it| it["id"] != "fish").collect();
+        let is_sea = |it: &Value| it["id"] == "fish" || it["id"] == "large_fish";
+        let land: Vec<&Value> = f.items.iter().filter(|it| !is_sea(it)).collect();
+        let mut sea = Vec::new();
+        for it in f.items.iter().filter(|it| is_sea(it)) {
+            let id = it["id"].as_str().unwrap().to_string();
+            let mass = num(it, "body_mass_kg")?; let m = mass.max(1e-4);
+            sea.push(Guild { id, mass, reach: 0.0, move_km: 0.0, assim: num(it, "assimilation")?, plants: vec![], prey: vec![], eats_carcass: false, eats_litter: false,
+                i_max: a_i * m.powf(exp), resp: a_r * m.powf(exp), mort: a_m * m.powf(exp), endotherm: false });
+        }
         let index = |id: &str| land.iter().position(|it| it["id"] == id);
         let mut guilds = Vec::new();
         for it in &land {
@@ -139,7 +149,7 @@ impl GuildSet {
             guilds.push(Guild { id: id.clone(), mass, reach, move_km: num(it, "move_km_per_month")?, assim: num(it, "assimilation")?, plants: plant_w, prey, eats_carcass: carcass, eats_litter: litter,
                 i_max: a_i * m.powf(exp), resp: a_r * m.powf(exp), mort: a_m * m.powf(exp), endotherm: id != "insect" });
         }
-        Ok(GuildSet { guilds, k_half, k_prey, disease })
+        Ok(GuildSet { guilds, sea, k_half, k_prey, disease })
     }
 }
 
@@ -149,6 +159,8 @@ pub struct Eco {
     pub leaf: Vec<StockId>, pub wood: Vec<StockId>, pub root: Vec<StockId>,
     pub carcass: StockId,
     pub fauna: Vec<StockId>,
+    pub sea_fauna: Vec<StockId>,
+    pub plankton: StockId, pub p_sea: StockId, pub p_deep_sea: StockId, pub p_marine: StockId,
     pub litter: StockId, pub sfast: StockId, pub sslow: StockId, pub spass: StockId,
     pub n_min: StockId, pub n_org: StockId, pub p_min: StockId, pub p_org: StockId, pub p_occ: StockId,
     pub b_nfix: BoundaryId, pub b_nloss: BoundaryId, pub b_rockp: BoundaryId, pub b_ploss: BoundaryId,
@@ -165,6 +177,11 @@ impl Eco {
         }
         let litter = c(reg, "c_litter".into()); let sfast = c(reg, "c_sfast".into()); let sslow = c(reg, "c_sslow".into()); let spass = c(reg, "c_spass".into());
         let carcass = c(reg, "c_carcass".into());
+        let sea_fauna: Vec<StockId> = guilds.sea.iter().map(|g| c(reg, format!("c_fauna_{}", g.id))).collect();
+        let plankton = c(reg, "c_plankton".into());
+        let p_sea = reg.add_stock("p_sea", "kgP/m2", Group::Phosphorus, Storage::Exact);
+        let p_deep_sea = reg.add_stock("p_deep_sea", "kgP/m2", Group::Phosphorus, Storage::Exact);
+        let p_marine = reg.add_stock("p_marine", "kgP/m2", Group::Phosphorus, Storage::Exact);
         let fauna: Vec<StockId> = guilds.guilds.iter().map(|g| c(reg, format!("c_fauna_{}", g.id))).collect();
         let n_min = reg.add_stock("n_min", "kgN/m2", Group::Nitrogen, Storage::Exact);
         let n_org = reg.add_stock("n_org", "kgN/m2", Group::Nitrogen, Storage::Exact);
@@ -172,7 +189,7 @@ impl Eco {
         let p_org = reg.add_stock("p_org", "kgP/m2", Group::Phosphorus, Storage::Exact);
         let p_occ = reg.add_stock("p_occ", "kgP/m2", Group::Phosphorus, Storage::Exact);
         Eco {
-            leaf, wood, root, carcass, fauna, litter, sfast, sslow, spass, n_min, n_org, p_min, p_org, p_occ,
+            leaf, wood, root, carcass, fauna, sea_fauna, plankton, p_sea, p_deep_sea, p_marine, litter, sfast, sslow, spass, n_min, n_org, p_min, p_org, p_occ,
             b_nfix: reg.add_boundary("nfix", Group::Nitrogen), b_nloss: reg.add_boundary("nloss", Group::Nitrogen),
             b_rockp: reg.add_boundary("rockp", Group::Phosphorus), b_ploss: reg.add_boundary("ploss", Group::Phosphorus),
         }

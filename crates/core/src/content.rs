@@ -121,7 +121,7 @@ mod tests {
     fn shipped_files_load_and_cross_check() {
         let c = Content::load_dir(&dir()).unwrap();
         assert_eq!(c.get("plant_types").unwrap().items.len(), 10);
-        assert_eq!(c.get("animal_guilds").unwrap().items.len(), 14);
+        assert_eq!(c.get("animal_guilds").unwrap().items.len(), 15);
         assert!(c.get("rock_types").unwrap().item("sc").is_some());
         // the plant parameters taken from LPJmL are verified; the ones we chose ourselves are flagged
         assert!(c.unverified.iter().all(|u| u.contains("plant_types") || u.contains("animal_guilds")), "only our own assumptions are unverified");
