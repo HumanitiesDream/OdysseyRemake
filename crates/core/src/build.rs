@@ -38,14 +38,35 @@ pub struct Setup {
     pub climate: ClimateParams,
     /// If set, only these modules are added (by name). For module tests.
     pub only: Option<Vec<String>>,
+    /// Years of spin-up with CO2 held at `co2_ppm`. 0: none. Run it with `spin_up`.
+    pub spin_up_years: u64,
+}
+
+/// The modules of the physical world, without plants, soil carbon and animals.
+pub const PHYSICAL: &[&str] = &["quakes", "volcanoes", "climate", "seaice", "hydro", "iceflow", "crust", "airmix", "oceancarbon", "landscape", "sealevel"];
+
+impl Setup {
+    /// Today's Earth with the physical modules only.
+    pub fn physical(n: u32) -> Setup { let mut s = Setup::today(n); s.only = Some(PHYSICAL.iter().map(|x| x.to_string()).collect()); s }
 }
 impl Setup {
-    pub fn today(n: u32) -> Setup { Setup { n, start_year: 1950, seed: 1, co2_ppm: 350.0, climate: ClimateParams::default(), only: None } }
+    pub fn today(n: u32) -> Setup { Setup { n, start_year: 1950, seed: 1, co2_ppm: 350.0, climate: ClimateParams::default(), only: None, spin_up_years: 0 } }
 }
 
 pub struct Built {
     pub sim: Sim,
     pub env: Env,
+    pub spin_up_months: u64,
+}
+
+/// Run the spin-up and close the books: the carbon the nudge supplied is part of the starting state.
+pub fn spin_up(b: &mut Built) {
+    b.sim.run_months(b.spin_up_months);
+    b.sim.world.reset_ledger();
+    b.sim.skipped = 0;
+    b.sim.world.log.clear();
+    b.sim.world.violation_count = 0;
+    b.sim.world.violations.clear();
 }
 
 /// Tile that starts as open sea (ocean connected or not: inland seas are handled by `SeaLevel`).
@@ -56,6 +77,9 @@ pub fn load_earth(n: u32) -> Result<Earth, String> {
 }
 
 pub fn build(s: &Setup) -> Result<Built, String> {
+    let mut s = s.clone();
+    if s.spin_up_years > 0 && s.climate.veg_baseline_month == u64::MAX { s.climate.veg_baseline_month = s.spin_up_years * 12; }
+    let s = &s;
     let earth = load_earth(s.n)?;
     let grid = Arc::new(Grid::new(s.n));
     let planet = Arc::new(Planet::new(grid.clone(), earth));
@@ -139,7 +163,7 @@ pub fn build(s: &Setup) -> Result<Built, String> {
     sim.world.reset_ledger();
     add(&mut sim, "quakes", Box::new(Quakes::new(env.clone(), hz.clone())))?;
     add(&mut sim, "volcanoes", Box::new(Volcanoes::new(env.clone(), hz.clone())))?;
-    add(&mut sim, "climate", Box::new(Climate::new(env.clone(), s.climate.clone())))?;
+    add(&mut sim, "climate", Box::new(Climate::new(env.clone(), s.climate.clone(), set.types.iter().map(|t| t.sla).collect(), set.types.iter().map(|t| format!("c_leaf_{}", t.id)).collect())))?;
     add(&mut sim, "seaice", Box::new(SeaIce::new(env.clone())))?;
     add(&mut sim, "hydro", Box::new(Hydro::new(env.clone(), set.clone(), eco.clone())))?;
     add(&mut sim, "plants", Box::new(Plants::new(env.clone(), set.clone(), eco.clone())))?;
@@ -148,9 +172,10 @@ pub fn build(s: &Setup) -> Result<Built, String> {
     add(&mut sim, "iceflow", Box::new(IceFlow::new(env.clone())))?;
     add(&mut sim, "crust", Box::new(Crust::new(env.clone(), base_load)))?;
     let share: Vec<f32> = { let w: Vec<f64> = (0..n).map(|i| hz.magma_m[i] * grid.area_km2[i] as f64).collect(); let sum: f64 = w.iter().sum::<f64>().max(1e-30); w.iter().map(|&x| (x / sum) as f32).collect() };
+    if s.spin_up_years > 0 { add(&mut sim, "nudge", Box::new(crate::carbon::Nudge::new(env.clone(), s.co2_ppm as f64, s.spin_up_years * 12)))?; }
     add(&mut sim, "airmix", Box::new(AirMix::new(env.clone())))?;
     add(&mut sim, "oceancarbon", Box::new(OceanCarbon::new(env.clone())))?;
     add(&mut sim, "landscape", Box::new(Landscape::new(env.clone(), share)))?;
     add(&mut sim, "sealevel", Box::new(SeaLevel::new(env.clone())))?;
-    Ok(Built { sim, env })
+    Ok(Built { sim, env, spin_up_months: s.spin_up_years * 12 })
 }

@@ -17,7 +17,7 @@ fn mean_obs(b: &Built, m: usize) -> f64 {
 #[test]
 fn base_climate_stays_put() {
     let _ = Grid::new(2);
-    let mut st = Setup::today(24);
+    let mut st = Setup::physical(24);
     st.only = Some(vec!["climate".into()]);
     let mut b = build(&st).unwrap();
     b.sim.parallel = Parallel::Off;
@@ -33,7 +33,7 @@ fn base_climate_stays_put() {
 
 #[test]
 fn doubling_co2_warms_by_a_plausible_amount() {
-    let mut s = Setup::today(24);
+    let mut s = Setup::physical(24);
     s.only = Some(vec!["climate".into()]);
     let mut b0 = build(&s).unwrap();
     s.co2_ppm = 700.0;
@@ -60,7 +60,7 @@ fn baked_earth_has_no_holes() {
 #[test]
 #[ignore]
 fn debug_blowup() {
-    let mut b = build(&Setup::today(24)).unwrap();
+    let mut b = build(&Setup::physical(24)).unwrap();
     b.sim.parallel = Parallel::Off;
     for y in 0..40 {
         b.sim.run_months(12);
@@ -74,7 +74,7 @@ fn debug_blowup() {
 #[test]
 #[ignore]
 fn debug_tile() {
-    let mut b = build(&Setup::today(24)).unwrap();
+    let mut b = build(&Setup::physical(24)).unwrap();
     b.sim.parallel = Parallel::Off;
     let h0 = b.sim.world.stock(b.env.ph.heat).to_vec();
     let mut worst = 0usize; 
@@ -91,7 +91,7 @@ fn debug_tile() {
 
 #[test]
 fn whole_model_climate_stays_near_the_base() {
-    let mut b = build(&Setup::today(24)).unwrap();
+    let mut b = build(&Setup::physical(24)).unwrap();
     b.sim.parallel = Parallel::Off;
     b.sim.run_years(30);
     let h = b.sim.world.stock(b.env.ph.heat);
@@ -112,7 +112,7 @@ fn whole_model_climate_stays_near_the_base() {
 #[test]
 #[ignore]
 fn debug_antarctic_tile() {
-    let mut b = build(&Setup::today(24)).unwrap();
+    let mut b = build(&Setup::physical(24)).unwrap();
     b.sim.parallel = Parallel::Off;
     let i = 3801usize;
     println!("tile {i}: lat {} bed0 {} ice0 {} ocean0 {}", b.env.p.lat_deg[i], b.env.p.bed0[i], b.env.p.earth.ice[i], b.env.ocean0[i]);

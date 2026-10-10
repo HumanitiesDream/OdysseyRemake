@@ -13,7 +13,7 @@ fn ppm(b: &Built) -> f64 {
 
 #[test]
 fn co2_holds_still_at_rest() {
-    let mut b = build(&Setup::today(24)).unwrap();
+    let mut b = build(&Setup::physical(24)).unwrap();
     b.sim.parallel = Parallel::Off;
     let p0 = ppm(&b);
     b.sim.run_years(60);
@@ -26,7 +26,7 @@ fn co2_holds_still_at_rest() {
 
 #[test]
 fn a_pulse_of_carbon_is_taken_up() {
-    let mut b = build(&Setup::today(24)).unwrap();
+    let mut b = build(&Setup::physical(24)).unwrap();
     b.sim.parallel = Parallel::Off;
     b.sim.run_years(5);
     let base = ppm(&b);

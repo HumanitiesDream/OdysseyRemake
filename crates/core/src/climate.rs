@@ -41,12 +41,15 @@ pub struct ClimateParams {
     /// Share of a surface albedo change that reaches the top of the air.
     pub albedo_reach: f32,
     pub coarse_n: u32,
+    /// Month at which today's plant cover is taken as the base for the vegetation albedo feedback.
+    /// Before it the feedback is off. u64::MAX: never.
+    pub veg_baseline_month: u64,
     /// How fast a tile's departure from its coarse-cell mean dies, W/m2/K. Heat moves fast at
     /// tile scale; without this the snow and ice feedbacks run away on single tiles.
     pub k_local: f32,
 }
 impl Default for ClimateParams {
-    fn default() -> Self { ClimateParams { b: 1.5, d: 0.55, gamma: 0.7, co2_ref_ppm: 350.0, albedo_reach: 0.4, coarse_n: 20, k_local: 25.0 } }
+    fn default() -> Self { ClimateParams { b: 1.5, d: 0.55, gamma: 0.7, co2_ref_ppm: 350.0, albedo_reach: 0.4, coarse_n: 20, veg_baseline_month: u64::MAX, k_local: 25.0 } }
 }
 
 /// Sea ice mass that fully covers a tile, mm w.e. Wide on purpose: a tile holds a range of ice.
@@ -55,7 +58,8 @@ pub const SEA_ICE_SCALE_MM: f32 = 2000.0;
 pub const SNOW_WIDTH_K: f32 = 16.0;
 pub const ALB_OCEAN: f32 = 0.07;
 pub const ALB_SEAICE: f32 = 0.60;
-pub const ALB_GROUND: f32 = 0.20;
+pub const ALB_BARE: f32 = 0.30;
+pub const ALB_FOREST: f32 = 0.13;
 pub const ALB_SNOW: f32 = 0.70;
 pub const ALB_ICE: f32 = 0.60;
 
@@ -63,13 +67,14 @@ pub const ALB_ICE: f32 = 0.60;
 fn snow_cover(t: f32) -> f32 { ((274.15 - t) / SNOW_WIDTH_K).clamp(0.0, 1.0) }
 
 /// Surface albedo from temperature, land ice share and sea ice (as stored heat).
-pub fn surface_albedo(env: &Env, i: usize, t: f32, h: f32, f_landice: f32) -> f32 {
+pub fn surface_albedo(env: &Env, i: usize, t: f32, h: f32, f_landice: f32, cover: f32) -> f32 {
     if env.ocean0[i] {
         let f_si = (env.sea_ice_mass(i, h) / SEA_ICE_SCALE_MM).clamp(0.0, 1.0);
         ALB_OCEAN * (1.0 - f_si) + ALB_SEAICE * f_si
     } else {
         let s = snow_cover(t);
-        (1.0 - f_landice) * (ALB_GROUND + (ALB_SNOW - ALB_GROUND) * s) + f_landice * ALB_ICE
+        let ground = ALB_BARE + (ALB_FOREST - ALB_BARE) * cover;
+        (1.0 - f_landice) * (ground + (ALB_SNOW - ground) * s * (1.0 - 0.5 * cover)) + f_landice * ALB_ICE
     }
 }
 
@@ -89,6 +94,11 @@ impl InsolTable {
     }
 }
 
+impl Climate {
+    /// Cover the base albedo was frozen at, for tests.
+    pub fn is_frozen(&self) -> bool { self.frozen }
+}
+
 pub struct Climate {
     env: Env,
     pub prm: ClimateParams,
@@ -98,13 +108,18 @@ pub struct Climate {
     reference: Option<InsolTable>,
     /// Ice-free ocean tiles never carry land ice, so only land tiles use this.
     f_landice0: Vec<f32>,
+    sla: Vec<f32>,
+    leaf_names: Vec<String>,
+    cover_ref: Vec<f32>,
+    frozen: bool,
 }
-struct Ids { heat: StockId, deep: StockId, c_air: StockId, aerosol: StockId, w_ice: Vec<StockId> }
+struct Ids { heat: StockId, deep: StockId, c_air: StockId, aerosol: StockId, w_ice: Vec<StockId>, leaf: Vec<StockId> }
 
 impl Climate {
-    pub fn new(env: Env, prm: ClimateParams) -> Climate {
+    pub fn new(env: Env, prm: ClimateParams, sla: Vec<f32>, leaf_names: Vec<String>) -> Climate {
         let f_landice0 = env.p.earth.ice.iter().zip(env.ocean0.iter()).map(|(&t, &o)| if o || t <= 20.0 { 0.0 } else { (t / 50.0).min(1.0) }).collect();
-        Climate { env, prm, ids: None, mix: None, now: None, reference: None, f_landice0 }
+        let n = env.n();
+        Climate { env, prm, ids: None, mix: None, now: None, reference: None, f_landice0, sla, leaf_names, cover_ref: vec![0.0; n], frozen: false }
     }
     fn f_landice(&self, i: usize, ice: &[&[f32]]) -> f32 {
         // land ice cover: a band is covered once it holds 50 m of ice, partly covered below that
@@ -119,13 +134,14 @@ impl Module for Climate {
         let ice: Vec<String> = (0..ph.w_ice.len()).map(|b| format!("w_ice{b}")).collect();
         let mut s = ModuleSpec::new("climate", Phase::Climate);
         s.reads = reads.drain(..).map(String::from).chain(ice).collect();
-        s.writes = vec!["heat".into(), "heat_deep".into()];
-        s.boundaries = vec!["sun".into(), "space".into(), "season".into(), "greenhouse".into()];
+        s.reads.extend(self.leaf_names.iter().cloned());
+        s.writes = vec!["heat".into(), "heat_deep".into(), "veg_ref".into()];
+        s.boundaries = vec!["sun".into(), "space".into(), "season".into(), "greenhouse".into(), "diag".into()];
         s
     }
     fn bind(&mut self, reg: &Registry, grid: &Grid) -> Result<(), WorldError> {
         let g = |n: &str| reg.stock(n).ok_or_else(|| WorldError::Unknown(n.into()));
-        self.ids = Some(Ids { heat: g("heat")?, deep: g("heat_deep")?, c_air: g("c_air")?, aerosol: g("aerosol")?, w_ice: (0..crate::earth::BANDS).map(|b| g(&format!("w_ice{b}"))).collect::<Result<_, _>>()? });
+        self.ids = Some(Ids { heat: g("heat")?, deep: g("heat_deep")?, c_air: g("c_air")?, aerosol: g("aerosol")?, leaf: self.leaf_names.iter().map(|n| g(n)).collect::<Result<_, _>>()?, w_ice: (0..crate::earth::BANDS).map(|b| g(&format!("w_ice{b}"))).collect::<Result<_, _>>()? });
         let cn = if grid.n > self.prm.coarse_n * 2 { self.prm.coarse_n } else { (grid.n / 2).max(2) };
         self.mix = Some(Coarse::new(grid, cn));
         self.reference = Some(InsolTable::build(1950));
@@ -155,6 +171,19 @@ impl Module for Climate {
         let aer = view.stock(ids.aerosol)?;
         let so2_mt: f64 = aer.iter().zip(area.iter()).map(|(&a, &ar)| a as f64 * ar as f64).sum();
         let f_aer = -(crate::hazards::SO2_FORCING_PER_MT * so2_mt) as f32;
+        // plant cover, from leaf carbon (a year-round figure, no leaf-off)
+        let leaf: Vec<&[f32]> = ids.leaf.iter().map(|&s| view.stock(s)).collect::<Result<_, _>>()?;
+        let cover_now: Vec<f32> = (0..n).map(|i| {
+            let l: Vec<f32> = (0..leaf.len()).map(|p| leaf[p][i]).collect();
+            crate::eco::cover_of(&self.sla, &l)
+        }).collect();
+        if !self.frozen && ctx.month_index >= self.prm.veg_baseline_month {
+            self.cover_ref = cover_now.clone();
+            self.frozen = true;
+            // publish it for the water module's rain recycling (+1 so that zero means 'not set')
+            let v: Vec<f32> = cover_now.iter().map(|c| c + 1.0).collect();
+            out.dense(Endpoint::Boundary(ph.b_diag), Endpoint::Stock(ph.veg_ref), n).copy_from_slice(&v);
+        }
         let tobs = &self.env.tobs;
         let secs = (MJ_PER_WM2_MONTH * ctx.dt_months as f64) as f32;
         // one signed lane per account: positive goes in, negative goes out
@@ -171,14 +200,15 @@ impl Module for Climate {
             let lat = self.env.p.lat_deg[i];
             let (qn, qr) = (now.at(lat, m), refr.at(lat, m));
             let f_li = if self.env.ocean0[i] { 0.0 } else { self.f_landice(i, &ice) };
-            let a_now = surface_albedo(&self.env, i, t, h, f_li);
-            let a_ref = surface_albedo(&self.env, i, t0, self.env.h_from_t(i, t0), self.f_landice0[i]);
+            let cov_ref = if self.frozen { self.cover_ref[i] } else { cover_now[i] };
+            let a_now = surface_albedo(&self.env, i, t, h, f_li, cover_now[i]);
+            let a_ref = surface_albedo(&self.env, i, t0, self.env.h_from_t(i, t0), self.f_landice0[i], cov_ref);
             let f_sun = (1.0 - 0.30) * (qn - qr) - qn * self.prm.albedo_reach * (a_now - a_ref) + f_aer;
             let f_rest = -self.prm.b * theta;
             let f_deep = if self.env.ocean0[i] { -self.prm.gamma * (theta - (deep[i] - HD_OFF) / C_DEEP) } else { 0.0 };
             // Semi-implicit step. The albedo feedback can be steeper than the restoring term, which
             // makes a plain monthly step blow up. Slope of the net flux against temperature, W/m2/K:
-            let a_up = surface_albedo(&self.env, i, t + 0.5, self.env.h_from_t(i, t + 0.5), f_li);
+            let a_up = surface_albedo(&self.env, i, t + 0.5, self.env.h_from_t(i, t + 0.5), f_li, cover_now[i]);
             let d_alb = qn * self.prm.albedo_reach * (a_now - a_up) / 0.5; // positive: warming adds heat
             let gslope = (self.prm.b + if self.env.ocean0[i] { self.prm.gamma } else { 0.0 } - d_alb).max(0.5);
             let damp = 1.0 / (1.0 + secs * gslope / self.env.cap_eff(i, h));
@@ -238,6 +268,13 @@ impl Module for Climate {
         }
         Ok(())
     }
+    fn save_state(&self) -> Option<Vec<u8>> { Some(self.state_bytes()) }
+    fn load_state(&mut self, b: &[u8]) -> Result<(), WorldError> {
+        if b.is_empty() { return Err(WorldError::Save("climate state".into())); }
+        self.frozen = b[0] != 0;
+        self.cover_ref = b[1..].chunks_exact(4).map(|c| f32::from_le_bytes(c.try_into().unwrap())).collect();
+        Ok(())
+    }
 }
 
 /// A per-tile signed flux. Positive values flow `from -> to`, negative values flow back.
@@ -252,5 +289,13 @@ impl Signed {
         let n = self.pos.len();
         if self.used_pos { out.dense(from, to, n).copy_from_slice(&self.pos); }
         if self.used_neg { out.dense(to, from, n).copy_from_slice(&self.neg); }
+    }
+}
+
+impl Climate {
+    fn state_bytes(&self) -> Vec<u8> {
+        let mut b = vec![self.frozen as u8];
+        for c in &self.cover_ref { b.extend(c.to_le_bytes()); }
+        b
     }
 }

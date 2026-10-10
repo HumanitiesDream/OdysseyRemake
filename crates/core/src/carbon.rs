@@ -103,3 +103,26 @@ impl Module for OceanCarbon {
         Ok(())
     }
 }
+
+/// During a spin-up the air's CO2 is held at a target, because the land is still filling with carbon.
+/// The carbon that takes is tallied in the `nudge` account. After `until_month` the module does nothing and
+/// the air is left to the books alone. Reset the ledger when the spin-up ends.
+pub struct Nudge { env: Env, c_air: StockId, target_ppm: f64, until_month: u64 }
+impl Nudge {
+    pub fn new(env: Env, target_ppm: f64, until_month: u64) -> Self { Nudge { env, c_air: StockId(0), target_ppm, until_month } }
+}
+impl Module for Nudge {
+    fn spec(&self) -> ModuleSpec { ModuleSpec::new("nudge", Phase::Climate).reads(&["c_air"]).writes(&["c_air"]).boundaries(&["nudge"]) }
+    fn bind(&mut self, reg: &Registry, _: &Grid) -> Result<(), WorldError> { self.c_air = reg.stock("c_air").ok_or_else(|| WorldError::Unknown("c_air".into()))?; Ok(()) }
+    fn step(&mut self, ctx: &StepCtx, view: &View, out: &mut FlowOut) -> Result<(), WorldError> {
+        if ctx.month_index >= self.until_month { return Ok(()); }
+        let c = view.stock(self.c_air)?;
+        let n = self.env.n();
+        let target = (self.target_ppm / crate::climate::PPM_PER_KGC_M2) as f32;
+        let (mut up, mut dn) = (vec![0f32; n], vec![0f32; n]);
+        for i in 0..n { let d = 0.5 * (target - c[i]); if d >= 0.0 { up[i] = d } else { dn[i] = -d } }
+        out.dense(Endpoint::Boundary(self.env.ph.b_nudge), Endpoint::Stock(self.c_air), n).copy_from_slice(&up);
+        out.dense(Endpoint::Stock(self.c_air), Endpoint::Boundary(self.env.ph.b_nudge), n).copy_from_slice(&dn);
+        Ok(())
+    }
+}

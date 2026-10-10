@@ -4,7 +4,7 @@ use odyssey_core::sim::Parallel;
 
 #[test]
 fn stands_still_and_balances() {
-    let mut s = Setup::today(48);
+    let mut s = Setup::physical(48);
     let mut b = build(&s).unwrap();
     s.only = None;
     b.sim.parallel = Parallel::Off;

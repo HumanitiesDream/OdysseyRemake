@@ -90,6 +90,8 @@ pub struct Phys {
     pub strain: StockId,
     pub magma: StockId,
     pub aerosol: StockId,
+    /// plant cover of the base state plus one (zero until it is set)
+    pub veg_ref: StockId,
     // outside accounts
     pub b_sun: BoundaryId,
     pub b_space: BoundaryId,
@@ -100,6 +102,7 @@ pub struct Phys {
     pub b_greenhouse: BoundaryId,
     pub b_volcano: BoundaryId,
     pub b_burial: BoundaryId,
+    pub b_nudge: BoundaryId,
     pub b_diag: BoundaryId,
     pub b_plates: BoundaryId,
     pub b_rupture: BoundaryId,
@@ -135,9 +138,10 @@ impl Phys {
         let strain = reg.add_stock("strain", "1e18Nm/km2", Group::Crust, Storage::Sparse);
         let magma = reg.add_stock("magma", "m", Group::Sediment, Storage::Sparse);
         let aerosol = reg.add_stock("aerosol", "Mt/km2", Group::Diag, Storage::Exact);
+        let veg_ref = reg.add_stock("veg_ref", "1", Group::Diag, Storage::Exact);
         Phys {
             w_sea, w_seaice, w_air, w_land, w_ground, w_snow, w_ice, heat, heat_deep, c_air, c_ocean, c_deep,
-            rock, reg: regl, sed_g, sed_s, sed_m, defl, runoff_y, strain, magma, aerosol,
+            rock, reg: regl, sed_g, sed_s, sed_m, defl, runoff_y, strain, magma, aerosol, veg_ref,
             b_sun: reg.add_boundary("sun", Group::Heat),
             b_space: reg.add_boundary("space", Group::Heat),
             b_season: reg.add_boundary("season", Group::Heat),
@@ -147,6 +151,7 @@ impl Phys {
             b_greenhouse: reg.add_boundary("greenhouse", Group::Heat),
             b_volcano: reg.add_boundary("volcano", Group::Carbon),
             b_burial: reg.add_boundary("burial", Group::Carbon),
+            b_nudge: reg.add_boundary("nudge", Group::Carbon),
             b_diag: reg.add_boundary("diag", Group::Diag),
             b_plates: reg.add_boundary("plates", Group::Crust),
             b_rupture: reg.add_boundary("rupture", Group::Crust),

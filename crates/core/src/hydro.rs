@@ -33,6 +33,9 @@ pub const FIRN_LIMIT_MM: f32 = 300.0;
 pub const W_HALF: f32 = 100.0;
 pub const FIELD_CAP: f32 = 120.0;
 pub const P_PER_K: f32 = 0.07;
+/// Share of the rain that changes with plant cover: a full forest against bare ground changes rain by this fraction.
+/// Within the 20 to 40 percent of rain that comes from local recycling in wet continental interiors (assumption).
+pub const RECYCLE: f32 = 0.25;
 
 /// Oudin et al. (2005): potential evaporation, mm per day, from daily mean insolation (W/m2)
 /// and air temperature (C).
@@ -74,7 +77,7 @@ impl Hydro {
 
 impl Module for Hydro {
     fn spec(&self) -> ModuleSpec {
-        let mut reads: Vec<String> = ["heat", "w_sea", "w_land", "w_ground", "rock", "reg", "sed_g", "sed_s", "sed_m", "defl"].iter().map(|s| s.to_string()).collect();
+        let mut reads: Vec<String> = ["heat", "veg_ref", "w_sea", "w_land", "w_ground", "rock", "reg", "sed_g", "sed_s", "sed_m", "defl"].iter().map(|s| s.to_string()).collect();
         let mut writes: Vec<String> = ["w_air", "w_sea", "w_land", "w_ground", "runoff_y"].iter().map(|s| s.to_string()).collect();
         for b in 0..BANDS { for k in ["w_snow", "w_ice"] { reads.push(format!("{k}{b}")); writes.push(format!("{k}{b}")); } }
         for t in &self.set.types { reads.push(format!("c_leaf_{}", t.id)); }
@@ -110,6 +113,7 @@ impl Module for Hydro {
         let w_ground = view.stock(ids.w_ground)?;
         let snow: Vec<&[f32]> = ids.snow.iter().map(|&s| view.stock(s)).collect::<Result<_, _>>()?;
         let ice: Vec<&[f32]> = ids.ice.iter().map(|&s| view.stock(s)).collect::<Result<_, _>>()?;
+        let veg_ref = view.stock(env.ph.veg_ref)?;
         let leaf: Vec<&[f32]> = self.eco.leaf.iter().map(|&s| view.stock(s)).collect::<Result<_, _>>()?;
         let set = &self.set;
         let (rock, regl, sg, ss, sm, defl) = (view.stock(ids.rock)?, view.stock(ids.reg)?, view.stock(ids.sg)?, view.stock(ids.ss)?, view.stock(ids.sm)?, view.stock(ids.defl)?);
@@ -184,7 +188,13 @@ impl Module for Hydro {
             }
             let t_mean = t_sum / BANDS as f32;
             let theta = (t_mean - tobs[i]).clamp(-40.0, 15.0);
-            let p_tile = prec[i] * (P_PER_K * theta).exp();
+            // forests make rain: more cover than the base state recycles more of the water that falls
+            let recycle = if veg_ref[i] > 0.0 {
+                let l: Vec<f32> = (0..NPT).map(|p| leaf[p][i]).collect();
+                let sla: Vec<f32> = set.types.iter().map(|t| t.sla).collect();
+                (1.0 + RECYCLE * (crate::eco::cover_of(&sla, &l) - (veg_ref[i] - 1.0))).clamp(0.5, 1.5)
+            } else { 1.0 };
+            let p_tile = prec[i] * (P_PER_K * theta).exp() * recycle;
             p_land_tile[i] = p_tile;
             sum_p_land += p_tile as f64 * a;
             let pet = pet_oudin(q, t_mean - 273.15) * days;

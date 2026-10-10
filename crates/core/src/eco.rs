@@ -114,6 +114,12 @@ pub const CP: [f32; 4] = [900.0, 150.0, 200.0, 150.0];
 pub const CN_LEAF: f32 = 30.0; pub const CN_WOOD: f32 = 330.0; pub const CN_ROOT: f32 = 30.0;
 pub const CP_LEAF: f32 = 450.0; pub const CP_WOOD: f32 = 5000.0; pub const CP_ROOT: f32 = 450.0;
 
+/// Plant cover from leaf carbon: 1 - exp(-0.5 LAI), LAI capped at 7. A year-round figure with no leaf-off.
+pub fn cover_of(sla: &[f32], leaf: &[f32]) -> f32 {
+    let lai: f32 = sla.iter().zip(leaf.iter()).map(|(s, l)| s * l).sum::<f32>().min(7.0);
+    1.0 - (-0.5 * lai).exp()
+}
+
 pub fn temp_factor(t: &PlantType, tc: f32) -> f32 {
     if tc <= t.t_min || tc >= t.t_max { 0.0 }
     else if tc < t.t_opt_lo { (tc - t.t_min) / (t.t_opt_lo - t.t_min) }

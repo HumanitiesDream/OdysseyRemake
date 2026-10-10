@@ -14,7 +14,7 @@ fn totals(b: &Built) -> (f64, f64, f64, f64) {
 
 #[test]
 fn water_closes_and_sea_level_holds() {
-    let mut b = build(&Setup::today(24)).unwrap();
+    let mut b = build(&Setup::physical(24)).unwrap();
     b.sim.parallel = Parallel::Off;
     let l0 = sea_level_of(&b.env, &b.sim.world);
     let t0 = totals(&b);
@@ -34,7 +34,7 @@ fn water_closes_and_sea_level_holds() {
 #[test]
 #[ignore]
 fn debug_ice_loss() {
-    let mut b = build(&Setup::today(24)).unwrap();
+    let mut b = build(&Setup::physical(24)).unwrap();
     b.sim.parallel = Parallel::Off;
     let ph = b.env.ph.clone(); let env = b.env.clone(); let grid = b.sim.world.grid.clone();
     let region = |i: usize| { let la = env.p.lat_deg[i]; let lo = grid.lon[i].to_degrees(); if la < -60.0 { 0 } else if la > 58.0 && lo > -75.0 && lo < -10.0 { 1 } else { 2 } };
@@ -46,7 +46,7 @@ fn debug_ice_loss() {
 #[test]
 #[ignore]
 fn debug_ice_monthly() {
-    let mut b = build(&Setup::today(24)).unwrap();
+    let mut b = build(&Setup::physical(24)).unwrap();
     b.sim.parallel = Parallel::Off;
     let ph = b.env.ph.clone(); let env = b.env.clone(); let grid = b.sim.world.grid.clone();
     let ant = |b: &Built| { let w = &b.sim.world; let mut ice = 0f64; let mut snow = 0f64; let mut land = 0f64; for i in 0..w.grid.len() { if env.p.lat_deg[i] < -60.0 { let a = grid.area_km2[i] as f64; ice += (0..12).map(|k| w.stock(ph.w_ice[k])[i] as f64).sum::<f64>() * a; snow += (0..12).map(|k| w.stock(ph.w_snow[k])[i] as f64).sum::<f64>() * a; land += w.stock(ph.w_land)[i] as f64 * a; } } (ice, snow, land) };
@@ -57,7 +57,7 @@ fn debug_ice_monthly() {
 #[test]
 #[ignore]
 fn debug_ice_flows() {
-    let mut b = build(&Setup::today(24)).unwrap();
+    let mut b = build(&Setup::physical(24)).unwrap();
     b.sim.parallel = Parallel::Off;
     b.sim.trace = Some(Default::default());
     b.sim.run_years(5);
