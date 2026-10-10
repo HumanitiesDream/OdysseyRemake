@@ -73,14 +73,15 @@ pub fn surface_albedo(env: &Env, i: usize, t: f32, h: f32, f_landice: f32) -> f3
     }
 }
 
-struct InsolTable { year: i64, q: Vec<[f32; 12]> } // 181 latitudes, -90..90
+/// Monthly insolation by latitude (181 steps, -90..90) for one year's orbit.
+pub struct InsolTable { pub year: i64, q: Vec<[f32; 12]> }
 impl InsolTable {
-    fn build(year: i64) -> InsolTable {
+    pub fn build(year: i64) -> InsolTable {
         let o = orbit::orbit_at(year as f64);
         let q = (0..=180).map(|k| { let lat = k as f64 - 90.0; let mut r = [0f32; 12]; for m in 0..12 { r[m] = orbit::monthly_insolation(lat, m, o) as f32; } r }).collect();
         InsolTable { year, q }
     }
-    fn at(&self, lat: f32, m: usize) -> f32 {
+    pub fn at(&self, lat: f32, m: usize) -> f32 {
         let x = (lat + 90.0).clamp(0.0, 180.0);
         let k = (x.floor() as usize).min(179);
         let t = x - k as f32;

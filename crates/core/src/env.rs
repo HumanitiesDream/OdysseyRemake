@@ -2,6 +2,7 @@
 //! and small pure functions that turn stocks into temperatures, heights and bands.
 //! Pure functions only. Every module recomputes what it needs from the stocks.
 
+use crate::earth::BANDS;
 use crate::planet::*;
 use std::sync::Arc;
 
@@ -70,8 +71,17 @@ impl Env {
     /// Bed height of band b, m, given the tile shift.
     pub fn band_bed(&self, i: usize, b: usize, shift: f32) -> f32 { self.p.z0_band(i, b) + shift }
 
-    /// Ice thickness of a band from its water equivalent, m.
-    pub fn ice_m(w: f32) -> f32 { w / RHO_ICE }
+    /// Is this tile open sea? Half or more of its area lies under the water that sits on it.
+    pub fn is_sea(&self, i: usize, shift: f32, w_sea_mm: f32) -> bool {
+        if w_sea_mm <= 0.0 { return false; }
+        let mut z = [0f32; BANDS];
+        for b in 0..BANDS { z[b] = self.band_bed(i, b, shift); }
+        crate::hydro::waterfill(&z, w_sea_mm / 1000.0).1 * 2 >= BANDS
+    }
+
+    /// Ice thickness of a band, m, from its stock. A band stock is spread over the whole tile
+    /// (so tile totals add up), and a band covers one twelfth of it, so local depth = 12 x stock.
+    pub fn ice_m(w: f32) -> f32 { w * BANDS as f32 / RHO_ICE }
 
     /// Surface air temperature of band b: the tile temperature, moved by the lapse rate to the band's height.
     pub fn band_temp(&self, i: usize, t_tile: f32, z_band_surface: f32) -> f32 {
@@ -87,7 +97,7 @@ pub fn snow_fraction(t_k: f32) -> f32 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::earth::Earth;
+    use crate::earth::{Earth, BANDS};
     use crate::grid::Grid;
 
     fn env() -> Env {

@@ -64,6 +64,7 @@ pub struct Phys {
     // water, mm = kg/m2
     pub w_sea: StockId,
     pub w_seaice: StockId,
+    pub w_air: StockId,
     pub w_land: StockId,
     pub w_ground: StockId,
     pub w_snow: [StockId; BANDS],
@@ -98,6 +99,7 @@ impl Phys {
         let w = |reg: &mut Registry, n: &str, s| reg.add_stock(n, "mm", Group::Water, s);
         let w_sea = w(reg, "w_sea", Storage::Exact);
         let w_seaice = w(reg, "w_seaice", Storage::Sparse);
+        let w_air = w(reg, "w_air", Storage::Sparse);
         let w_land = w(reg, "w_land", Storage::Exact);
         let w_ground = w(reg, "w_ground", Storage::Exact);
         let mut w_snow = [StockId(0); BANDS];
@@ -116,7 +118,7 @@ impl Phys {
         let sed_m = m(reg, "sed_m", Storage::Sparse);
         let defl = reg.add_stock("defl", "m", Group::Crust, Storage::Exact);
         Phys {
-            w_sea, w_seaice, w_land, w_ground, w_snow, w_ice, heat, heat_deep, c_air, c_ocean,
+            w_sea, w_seaice, w_air, w_land, w_ground, w_snow, w_ice, heat, heat_deep, c_air, c_ocean,
             rock, reg: regl, sed_g, sed_s, sed_m, defl,
             b_sun: reg.add_boundary("sun", Group::Heat),
             b_space: reg.add_boundary("space", Group::Heat),

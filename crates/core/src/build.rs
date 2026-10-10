@@ -1,6 +1,9 @@
 //! Assemble a world: load the baked Earth, register stocks, set the starting state, add modules.
 
 use crate::climate::{Climate, ClimateParams, PPM_PER_KGC_M2, HD_OFF};
+use crate::hydro::Hydro;
+use crate::ice::IceFlow;
+use crate::sea::{SeaIce, SeaLevel};
 use crate::earth::{Earth, BANDS};
 use crate::env::*;
 use crate::grid::Grid;
@@ -34,6 +37,9 @@ pub struct Built {
     pub env: Env,
 }
 
+/// Tile that starts as open sea (ocean connected or not: inland seas are handled by `SeaLevel`).
+fn ocean_tile(env: &Env, i: usize) -> bool { env.ocean0[i] }
+
 pub fn load_earth(n: u32) -> Result<Earth, String> {
     Earth::load(&data_dir().join("baked").join(format!("earth-n{n}.bin")))
 }
@@ -45,7 +51,8 @@ pub fn build(s: &Setup) -> Result<Built, String> {
     let n = planet.n;
     let mut reg = Registry::new();
     let ph = Phys::register(&mut reg);
-    let ocean0: Vec<bool> = (0..n).map(|i| !planet.earth.is_land(i)).collect();
+    // open sea at the start: not land, and not a marine basin filled by grounded ice
+    let ocean0: Vec<bool> = (0..n).map(|i| !planet.earth.is_land(i) && planet.earth.ice[i] < 100.0).collect();
     let rock0: Vec<f32> = (0..n).map(|i| ROCK_DATUM + planet.bed0[i]).collect();
     let tobs = Arc::new(planet.earth.tair.clone());
     let env = Env { p: planet.clone(), ph: ph.clone(), base: Arc::new(rock0.clone()), ocean0: Arc::new(ocean0), tobs };
@@ -62,11 +69,25 @@ pub fn build(s: &Setup) -> Result<Built, String> {
     // today's ice sheets and glaciers: the mean thickness of the tile in every band
     for i in 0..n {
         let thick = planet.earth.ice[i];
-        if thick > 20.0 { for b in 0..BANDS { world.stock_mut(ph.w_ice[b])[i] = thick * RHO_ICE; } }
+        if thick > 20.0 && !env.ocean0[i] { for b in 0..BANDS { world.stock_mut(ph.w_ice[b])[i] = thick * RHO_ICE / BANDS as f32; } }
+    }
+    // sea: fill the open ocean to sea level 0 (m); soil water and groundwater start moist
+    for i in 0..n {
+        let zb: Vec<f32> = (0..BANDS).map(|b| planet.z0_band(i, b)).collect();
+        // sea water in every low band that lies under sea level 0, except where grounded ice sits
+        let grounded = planet.earth.ice[i] > 100.0;
+        let d = crate::sea::depth_at(&zb, 0.0);
+        if !grounded { world.stock_mut(ph.w_sea)[i] = d * 1000.0; }
+        if !ocean_tile(&env, i) { world.stock_mut(ph.w_land)[i] = 150.0; world.stock_mut(ph.w_ground)[i] = 75.0; }
     }
     let _ = area;
     world.reset_ledger();
     let mut sim = Sim::new(world);
-    sim.add_module(Box::new(Climate::new(env.clone(), s.climate.clone()))).map_err(|e| e.to_string())?;
+    let add = |sim: &mut Sim, m: Box<dyn crate::module::Module>| sim.add_module(m).map_err(|e| e.to_string());
+    add(&mut sim, Box::new(Climate::new(env.clone(), s.climate.clone())))?;
+    add(&mut sim, Box::new(SeaIce::new(env.clone())))?;
+    add(&mut sim, Box::new(Hydro::new(env.clone())))?;
+    add(&mut sim, Box::new(IceFlow::new(env.clone())))?;
+    add(&mut sim, Box::new(SeaLevel::new(env.clone())))?;
     Ok(Built { sim, env })
 }

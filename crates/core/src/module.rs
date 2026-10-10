@@ -38,6 +38,7 @@ impl ModuleSpec {
         ModuleSpec { name: name.into(), phase, period_months: 1, offset: 0, reads: vec![], writes: vec![], boundaries: vec![] }
     }
     pub fn reads(mut self, names: &[&str]) -> Self { self.reads = names.iter().map(|s| s.to_string()).collect(); self }
+    pub fn also_reads(mut self, names: &[String]) -> Self { self.reads.extend(names.iter().cloned()); self }
     pub fn writes(mut self, names: &[&str]) -> Self { self.writes = names.iter().map(|s| s.to_string()).collect(); self }
     pub fn boundaries(mut self, names: &[&str]) -> Self { self.boundaries = names.iter().map(|s| s.to_string()).collect(); self }
     pub fn every(mut self, months: u32) -> Self { self.period_months = months.max(1); self }

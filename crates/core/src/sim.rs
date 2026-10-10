@@ -39,12 +39,14 @@ pub struct Sim {
     pub detail: Detail,
     /// Count of months a module was skipped because of an error.
     pub skipped: u64,
+    /// When set, running totals of every flow lane by module, in (density unit x km2). For diagnosis.
+    pub trace: Option<std::collections::BTreeMap<String, f64>>,
 }
 
 type Outcome = (usize, Result<FlowOut, WorldError>);
 
 impl Sim {
-    pub fn new(world: World) -> Sim { Sim { world, slots: Vec::new(), parallel: Parallel::Auto(5000), detail: Detail::Full, skipped: 0 } }
+    pub fn new(world: World) -> Sim { Sim { world, slots: Vec::new(), parallel: Parallel::Auto(5000), detail: Detail::Full, skipped: 0, trace: None } }
 
     pub fn add_module(&mut self, mut module: Box<dyn Module>) -> Result<(), WorldError> {
         let spec = module.spec();
@@ -115,7 +117,15 @@ impl Sim {
         for (i, outcome) in outcomes {
             let verdict = outcome.and_then(|out| self.world.validate(&self.slots[i].res, &out).map(|_| out));
             match verdict {
-                Ok(out) => good.push(out),
+                Ok(out) => {
+                    if let Some(tr) = self.trace.as_mut() {
+                        let reg = &self.world.reg;
+                        let name = |e: &crate::flows::Endpoint| match e { crate::flows::Endpoint::Stock(s) => reg.def(*s).name.clone(), crate::flows::Endpoint::Boundary(b) => format!("[{}]", reg.bdef(*b).name), crate::flows::Endpoint::Transit => "(transit)".into() };
+                        for ((f, t), v) in &out.lanes { *tr.entry(format!("{}: {} > {}", self.slots[i].res.name, name(f), name(t))).or_insert(0.0) += v.iter().map(|e| e.amount).sum::<f64>(); }
+                        for ((f, t), v) in &out.dense { *tr.entry(format!("{}: {} > {}", self.slots[i].res.name, name(f), name(t))).or_insert(0.0) += v.iter().zip(self.world.grid.area_km2.iter()).map(|(&d, &a)| d as f64 * a as f64).sum::<f64>(); }
+                    }
+                    good.push(out)
+                }
                 Err(e) => {
                     self.skipped += 1;
                     if self.world.log.len() < 1000 { self.world.log.push(format!("month {}: {}", month, e)); }

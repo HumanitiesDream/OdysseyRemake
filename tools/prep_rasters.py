@@ -89,7 +89,9 @@ if os.path.exists(icefile):
     for r0 in range(0, H, step):
         ice_s = np.array(zi[r0:r0 + step, :W], dtype=np.float32)
         bed_s = np.array(z[r0:r0 + step, :W], dtype=np.float32)
-        thick = np.where(bed_s > -50, np.maximum(ice_s - bed_s, 0), 0)   # ice on land only; floating ice shelves ignored
+        # grounded ice: on land, or in a marine basin where the surface stands high (shelves sit below ~150 m and are left out)
+        grounded = (bed_s > -50) | (ice_s > 150)
+        thick = np.where(grounded, np.maximum(ice_s - bed_s, 0), 0)
         thick = np.where(thick < 20, 0, thick)                            # cut the noise between the two grids
         ice3[r0 // 3:(r0 + step) // 3] = thick.reshape(step // 3, 3, W // 3, 3).mean(axis=(1, 3))
     ice3 = ice3[::-1]
