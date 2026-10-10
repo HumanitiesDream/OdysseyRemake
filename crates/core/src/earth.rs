@@ -128,13 +128,13 @@ impl Raster {
     }
 }
 
-fn unit(lat_deg: f64, lon_deg: f64) -> [f32; 3] {
+pub fn unit(lat_deg: f64, lon_deg: f64) -> [f32; 3] {
     let (la, lo) = (lat_deg.to_radians(), lon_deg.to_radians());
     [(la.cos() * lo.cos()) as f32, la.sin() as f32, (-la.cos() * lo.sin()) as f32]
 }
 
 /// Nearest tile to a point, walking from `hint`.
-fn nearest(grid: &Grid, p: [f32; 3], mut cur: usize) -> usize {
+pub fn nearest(grid: &Grid, p: [f32; 3], mut cur: usize) -> usize {
     let dot = |i: usize| { let q = grid.pos[i]; q[0] as f64 * p[0] as f64 + q[1] as f64 * p[1] as f64 + q[2] as f64 * p[2] as f64 };
     let mut best = dot(cur);
     loop {

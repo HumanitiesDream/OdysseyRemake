@@ -24,8 +24,16 @@ pub struct Entry {
     pub amount: f64,
 }
 
+/// What happened, as a readout. Never a cause: events are written down after the stocks moved.
+#[derive(Copy, Clone, Debug, PartialEq)]
+pub enum EventKind { Quake, Tsunami, Eruption, Landslide, Fire, Flood, LakeBurst, Storm, Drought, Calving, Crash, Outbreak }
+
+#[derive(Copy, Clone, Debug)]
+pub struct Event { pub month: u64, pub kind: EventKind, pub tile: u32, pub size: f32 }
+
 #[derive(Default, Debug)]
 pub struct FlowOut {
+    pub events: Vec<Event>,
     /// Keyed by (from, to). A BTreeMap keeps the apply order the same on every run.
     pub(crate) lanes: BTreeMap<(Endpoint, Endpoint), Vec<Entry>>,
     /// Same-tile flows as one density per tile, for modules that touch every tile.

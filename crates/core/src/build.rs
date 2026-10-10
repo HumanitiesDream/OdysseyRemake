@@ -1,6 +1,7 @@
 //! Assemble a world: load the baked Earth, register stocks, set the starting state, add modules.
 
 use crate::climate::{Climate, ClimateParams, PPM_PER_KGC_M2, HD_OFF};
+use crate::hazards::{HazardMap, Quakes, Volcanoes};
 use crate::hydro::Hydro;
 use crate::crust::Crust;
 use crate::ice::IceFlow;
@@ -98,6 +99,12 @@ pub fn build(s: &Setup) -> Result<Built, String> {
         let ice: Vec<f32> = (0..BANDS).map(|b| sim.world.stock(ph.w_ice[b])[i]).collect();
         Crust::load_of(sim.world.stock(ph.w_sea)[i], &ice, 0.0)
     }).collect();
+    let hz = Arc::new(HazardMap::load(&grid, &data_dir().join("hazards"))?);
+    sim.world.stock_mut(ph.strain).copy_from_slice(&hz.initial_strain(&grid, s.seed));
+    sim.world.stock_mut(ph.magma).copy_from_slice(&hz.initial_magma(s.seed));
+    sim.world.reset_ledger();
+    add(&mut sim, "quakes", Box::new(Quakes::new(env.clone(), hz.clone())))?;
+    add(&mut sim, "volcanoes", Box::new(Volcanoes::new(env.clone(), hz)))?;
     add(&mut sim, "climate", Box::new(Climate::new(env.clone(), s.climate.clone())))?;
     add(&mut sim, "seaice", Box::new(SeaIce::new(env.clone())))?;
     add(&mut sim, "hydro", Box::new(Hydro::new(env.clone())))?;

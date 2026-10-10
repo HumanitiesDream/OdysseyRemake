@@ -103,6 +103,9 @@ pub struct World {
     pub violations: Vec<Violation>,
     pub violation_count: u64,
     pub log: Vec<String>,
+    /// The news: what the stocks did. Capped.
+    pub events: Vec<crate::flows::Event>,
+    pub event_count: u64,
     /// Rounding left over when a stock was last stored as f32 (true value = cur + resid).
     /// Carried into the next step, so f32 storage cannot leak or gain matter over time.
     pub(crate) resid: Vec<Vec<f32>>,
@@ -118,7 +121,7 @@ impl World {
             cur: vec![vec![0f32; n]; ns],
             resid: vec![vec![0f32; n]; ns],
             grid, reg, clock: Clock::new(start_year), seed,
-            violations: Vec::new(), violation_count: 0, log: Vec::new(),
+            violations: Vec::new(), violation_count: 0, log: Vec::new(), events: Vec::new(), event_count: 0,
             initial: [0.0; NGROUPS], boundary_net: [0.0; NGROUPS],
         }
     }

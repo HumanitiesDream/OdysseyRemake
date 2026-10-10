@@ -99,7 +99,7 @@ pub struct Climate {
     /// Ice-free ocean tiles never carry land ice, so only land tiles use this.
     f_landice0: Vec<f32>,
 }
-struct Ids { heat: StockId, deep: StockId, c_air: StockId, w_ice: Vec<StockId> }
+struct Ids { heat: StockId, deep: StockId, c_air: StockId, aerosol: StockId, w_ice: Vec<StockId> }
 
 impl Climate {
     pub fn new(env: Env, prm: ClimateParams) -> Climate {
@@ -117,7 +117,7 @@ impl Climate {
 impl Module for Climate {
     fn spec(&self) -> ModuleSpec {
         let ph = &self.env.ph;
-        let mut reads = vec!["heat", "heat_deep", "c_air"];
+        let mut reads = vec!["heat", "heat_deep", "c_air", "aerosol"];
         let ice: Vec<String> = (0..ph.w_ice.len()).map(|b| format!("w_ice{b}")).collect();
         let mut s = ModuleSpec::new("climate", Phase::Climate);
         s.reads = reads.drain(..).map(String::from).chain(ice).collect();
@@ -127,7 +127,7 @@ impl Module for Climate {
     }
     fn bind(&mut self, reg: &Registry, grid: &Grid) -> Result<(), WorldError> {
         let g = |n: &str| reg.stock(n).ok_or_else(|| WorldError::Unknown(n.into()));
-        self.ids = Some(Ids { heat: g("heat")?, deep: g("heat_deep")?, c_air: g("c_air")?, w_ice: (0..crate::earth::BANDS).map(|b| g(&format!("w_ice{b}"))).collect::<Result<_, _>>()? });
+        self.ids = Some(Ids { heat: g("heat")?, deep: g("heat_deep")?, c_air: g("c_air")?, aerosol: g("aerosol")?, w_ice: (0..crate::earth::BANDS).map(|b| g(&format!("w_ice{b}"))).collect::<Result<_, _>>()? });
         let cn = if grid.n > self.prm.coarse_n * 2 { self.prm.coarse_n } else { (grid.n / 2).max(2) };
         self.mix = Some(Coarse::new(grid, cn));
         self.reference = Some(InsolTable::build(1950));
@@ -153,6 +153,10 @@ impl Module for Climate {
         let ppm = (c_mean * PPM_PER_KGC_M2) as f32;
         let f_co2 = 5.35 * (ppm / self.prm.co2_ref_ppm).max(1e-3).ln();
 
+        // stratospheric sulphur from eruptions dims the sun everywhere
+        let aer = view.stock(ids.aerosol)?;
+        let so2_mt: f64 = aer.iter().zip(area.iter()).map(|(&a, &ar)| a as f64 * ar as f64).sum();
+        let f_aer = -(crate::hazards::SO2_FORCING_PER_MT * so2_mt) as f32;
         let tobs = &self.env.tobs;
         let secs = (MJ_PER_WM2_MONTH * ctx.dt_months as f64) as f32;
         // one signed lane per account: positive goes in, negative goes out
@@ -171,7 +175,7 @@ impl Module for Climate {
             let f_li = if self.env.ocean0[i] { 0.0 } else { self.f_landice(i, &ice) };
             let a_now = surface_albedo(&self.env, i, t, h, f_li);
             let a_ref = surface_albedo(&self.env, i, t0, self.env.h_from_t(i, t0), self.f_landice0[i]);
-            let f_sun = (1.0 - 0.30) * (qn - qr) - qn * self.prm.albedo_reach * (a_now - a_ref);
+            let f_sun = (1.0 - 0.30) * (qn - qr) - qn * self.prm.albedo_reach * (a_now - a_ref) + f_aer;
             let f_rest = -self.prm.b * theta;
             let f_deep = if self.env.ocean0[i] { -self.prm.gamma * (theta - (deep[i] - HD_OFF) / C_DEEP) } else { 0.0 };
             // Semi-implicit step. The albedo feedback can be steeper than the restoring term, which

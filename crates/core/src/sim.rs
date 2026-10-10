@@ -132,6 +132,7 @@ impl Sim {
                 }
             }
         }
+        for o in &good { for e in &o.events { self.world.event_count += 1; if self.world.events.len() < 200_000 { self.world.events.push(*e); } } }
         let refs: Vec<&FlowOut> = good.iter().collect();
         self.world.apply(&refs);
         self.world.clock.month_index += 1;

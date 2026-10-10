@@ -13,6 +13,7 @@ pub mod earth;
 pub mod env;
 pub mod flows;
 pub mod grid;
+pub mod hazards;
 pub mod hydro;
 pub mod ice;
 pub mod landscape;
@@ -28,7 +29,7 @@ pub mod stocks;
 pub mod units;
 pub mod world;
 
-pub use flows::{Endpoint, FlowOut};
+pub use flows::{Endpoint, Event, EventKind, FlowOut};
 pub use grid::{Coarse, Grid};
 // sim re-export added below
 pub use stocks::{BoundaryId, Group, Registry, Storage, StockId};
