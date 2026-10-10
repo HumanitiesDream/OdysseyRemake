@@ -7,6 +7,7 @@ use crate::hydro::Hydro;
 use crate::content::Content;
 use crate::crust::Crust;
 use crate::dispersal::Dispersal;
+use crate::fire::Fire;
 use crate::eco::{Eco, PlantSet, NPT, CN, CP};
 use crate::plants::Plants;
 use crate::soilbgc::{initial_pools, SoilBgc};
@@ -88,7 +89,8 @@ pub fn build(s: &Setup) -> Result<Built, String> {
     let ph = Phys::register(&mut reg);
     let content = Content::load_dir(&data_dir())?;
     let set = PlantSet::from_content(&content)?;
-    let eco = Eco::register(&mut reg, &set);
+    let guilds = crate::eco::GuildSet::from_content(&content, &set)?;
+    let eco = Eco::register(&mut reg, &set, &guilds);
     // open sea at the start: not land, and not a marine basin filled by grounded ice
     // (ice that is too thin to hold its bed down floats: it belongs to the sea, not to the ice sheet)
     let grounded: Vec<bool> = (0..n).map(|i| planet.earth.ice[i] > 20.0 && planet.earth.ice[i] > 1.12 * (-planet.bed0[i]).max(0.0)).collect();
@@ -141,8 +143,10 @@ pub fn build(s: &Setup) -> Result<Built, String> {
             let fits = tcold >= t.cold_min && tcold <= t.cold_max && tmax > t.t_min + 5.0 && prec > t.aprec_min_mm() as f64;
             if fits { world.stock_mut(eco.leaf[p])[i] = 0.02; world.stock_mut(eco.root[p])[i] = 0.02; seeded += 0.04 / crate::eco::CN_LEAF; }
         }
-        world.stock_mut(eco.n_org)[i] = n_org + seeded;
-        world.stock_mut(eco.p_org)[i] = p_org + seeded * 0.07;
+        let mut fauna_c = 0f32;
+        if seeded > 0.0 { for g in 0..guilds.guilds.len() { world.stock_mut(eco.fauna[g])[i] = 2.0e-5; fauna_c += 2.0e-5; } }
+        world.stock_mut(eco.n_org)[i] = n_org + seeded + fauna_c / crate::fauna::CN_FAUNA as f32;
+        world.stock_mut(eco.p_org)[i] = p_org + seeded * crate::eco::CN_LEAF / crate::eco::CP_LEAF + fauna_c / crate::fauna::CP_FAUNA as f32;
         world.stock_mut(eco.n_min)[i] = 0.003;
         world.stock_mut(eco.p_min)[i] = 4.0e-5;
         world.stock_mut(eco.p_occ)[i] = 4.0e-4;
@@ -168,6 +172,8 @@ pub fn build(s: &Setup) -> Result<Built, String> {
     add(&mut sim, "hydro", Box::new(Hydro::new(env.clone(), set.clone(), eco.clone())))?;
     add(&mut sim, "plants", Box::new(Plants::new(env.clone(), set.clone(), eco.clone())))?;
     add(&mut sim, "soilbgc", Box::new(SoilBgc::new(env.clone(), eco.clone())))?;
+    add(&mut sim, "fire", Box::new(Fire::new(env.clone(), set.clone(), eco.clone())))?;
+    add(&mut sim, "fauna", Box::new(crate::fauna::Fauna::new(env.clone(), set.clone(), guilds.clone(), eco.clone())))?;
     add(&mut sim, "dispersal", Box::new(Dispersal::new(env.clone(), set.clone(), eco.clone())))?;
     add(&mut sim, "iceflow", Box::new(IceFlow::new(env.clone())))?;
     add(&mut sim, "crust", Box::new(Crust::new(env.clone(), base_load)))?;

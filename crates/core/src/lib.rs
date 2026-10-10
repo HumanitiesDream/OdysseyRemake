@@ -14,6 +14,8 @@ pub mod demo;
 pub mod earth;
 pub mod eco;
 pub mod env;
+pub mod fauna;
+pub mod fire;
 pub mod flows;
 pub mod grid;
 pub mod hazards;

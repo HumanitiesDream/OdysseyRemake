@@ -150,3 +150,90 @@ fn debug_tile_by_id() {
     std::env::set_var("ODY_TILE", id.to_string());
     b.sim.run_years(120);
 }
+
+fn spun(n: u32, years: u64) -> Built {
+    let mut s = Setup::today(n);
+    s.spin_up_years = years;
+    let mut b = build(&s).unwrap();
+    b.sim.parallel = Parallel::Off;
+    spin_up(&mut b);
+    b
+}
+
+#[test]
+#[ignore]
+fn debug_fire_budget() {
+    let n: u32 = std::env::var("N").ok().and_then(|v| v.parse().ok()).unwrap_or(24);
+    let mut b = spun(n, 150);
+    println!("spin-up done, skipped {}, violations {}", b.sim.skipped, b.sim.world.violation_count);
+    let t = std::time::Instant::now();
+    b.sim.world.events.clear();
+    b.sim.run_years(60);
+    let sizes: Vec<f64> = b.sim.world.events.iter().filter(|e| e.kind == odyssey_core::EventKind::Fire).map(|e| e.size as f64).collect();
+    let total: f64 = sizes.iter().sum();
+    let mut sorted = sizes.clone(); sorted.sort_by(|a, b| b.partial_cmp(a).unwrap());
+    let top1: f64 = sorted.iter().take((sorted.len() / 100).max(1)).sum();
+    println!("60 years in {:.1}s: {} fires, burned {:.2} Mha/yr (GFED4: 348), largest {:.0} km2, top 1 percent of fires = {:.0} percent of area", t.elapsed().as_secs_f64(), sizes.len(), total / 60.0 / 1e4, sorted.first().cloned().unwrap_or(0.0), 100.0 * top1 / total.max(1.0));
+    println!("skipped {} log {:?} violations {} first {:?}", b.sim.skipped, b.sim.world.log.first(), b.sim.world.violation_count, b.sim.world.violations.first());
+}
+
+#[test]
+#[ignore]
+fn debug_after_spinup() {
+    let mut b = spun(24, 150);
+    let w = &b.sim.world;
+    let c = w.stock(b.env.ph.c_air);
+    println!("c_air tile0 {} mean {}", c[0], c.iter().sum::<f32>() / c.len() as f32);
+    b.sim.run_months(3);
+    println!("skipped {} log {:?}", b.sim.skipped, &b.sim.world.log[..b.sim.world.log.len().min(2)]);
+    let w = &b.sim.world;
+    for (s, def) in w.reg.stocks.iter().enumerate() {
+        let bad = w.cur[s].iter().position(|v| !v.is_finite());
+        if let Some(i) = bad { println!("non-finite in {} at {}", def.name, i); }
+    }
+}
+
+#[test]
+#[ignore]
+fn debug_n_consistency() {
+    let b = spun(24, 150);
+    let content = odyssey_core::content::Content::load_dir(&data_dir()).unwrap();
+    let set = odyssey_core::eco::PlantSet::from_content(&content).unwrap();
+    let w = &b.sim.world; let reg = &w.reg;
+    let st = |n: &str| w.stock(reg.stock(n).unwrap());
+    let (mut tot_act, mut tot_exp, mut low) = (0f64, 0f64, 0);
+    let mut cnt = 0;
+    for i in 0..w.grid.len() {
+        if b.env.ocean0[i] || b.env.p.earth.ice[i] > 100.0 { continue; }
+        let mut exp = st("c_litter")[i] / 45.0 + st("c_sfast")[i] / 10.0 + st("c_sslow")[i] / 12.0 + st("c_spass")[i] / 9.0;
+        for t in &set.types { exp += st(&format!("c_leaf_{}", t.id))[i] / 30.0 + st(&format!("c_wood_{}", t.id))[i] / 330.0 + st(&format!("c_root_{}", t.id))[i] / 30.0; }
+        let act = st("n_org")[i];
+        tot_act += act as f64; tot_exp += exp as f64; cnt += 1;
+        if act < 0.7 * exp { low += 1; }
+    }
+    println!("n_org actual {:.3e} expected from carbon {:.3e} (ratio {:.2}); {} of {} tiles below 70 percent", tot_act, tot_exp, tot_act / tot_exp, low, cnt);
+}
+
+/// Prints animal carbon by guild after a spin-up and a run.
+#[test]
+#[ignore]
+fn debug_fauna_report() {
+    let n: u32 = std::env::var("N").ok().and_then(|v| v.parse().ok()).unwrap_or(24);
+    let yrs: u64 = std::env::var("YRS").ok().and_then(|v| v.parse().ok()).unwrap_or(100);
+    let mut b = spun(n, 150);
+    println!("spin-up done, skipped {}, violations {}", b.sim.skipped, b.sim.world.violation_count);
+    let names: Vec<String> = { let c = odyssey_core::content::Content::load_dir(&data_dir()).unwrap(); let ps = odyssey_core::eco::PlantSet::from_content(&c).unwrap(); odyssey_core::eco::GuildSet::from_content(&c, &ps).unwrap().guilds.iter().map(|g| format!("c_fauna_{}", g.id)).collect() };
+    let area = b.sim.world.grid.area_km2.clone();
+    for chunk in 0..(yrs / 20).max(1) {
+        b.sim.run_years(20);
+        let mut line = format!("yr {:>4}:", 150 + 20 * (chunk + 1));
+        let mut tot = 0f64;
+        for nm in &names {
+            let id = b.sim.world.reg.stock(nm).unwrap();
+            let s = b.sim.world.stock(id);
+            let t: f64 = (0..s.len()).map(|i| s[i] as f64 * area[i] as f64 * 1e6).sum::<f64>() / 1e12; // MtC? kgC -> PgC is 1e12
+            tot += t; line += &format!(" {}={:.4}", nm.trim_start_matches("c_fauna_"), t);
+        }
+        println!("{line} total={tot:.4} PgC viol={} skipped={} first={:?}", b.sim.world.violation_count, b.sim.skipped, b.sim.world.violations.first());
+    }
+}

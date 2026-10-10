@@ -63,7 +63,7 @@ impl Plants {
 impl Module for Plants {
     fn spec(&self) -> ModuleSpec {
         let mut s = ModuleSpec::new("plants", Phase::SoilPlants).boundaries(&[]);
-        let mut reads: Vec<String> = ["heat", "w_land", "w_sea", "c_air", "rock", "reg", "sed_g", "sed_s", "sed_m", "defl", "n_min", "p_min"].iter().map(|x| x.to_string()).collect();
+        let mut reads: Vec<String> = ["heat", "w_land", "w_sea", "c_air", "rock", "reg", "sed_g", "sed_s", "sed_m", "defl", "n_min", "p_min", "n_org", "p_org"].iter().map(|x| x.to_string()).collect();
         for b in 0..BANDS { reads.push(format!("w_ice{b}")); }
         let mut writes: Vec<String> = ["c_air", "c_litter", "n_min", "n_org", "p_min", "p_org"].iter().map(|x| x.to_string()).collect();
         for t in &self.set.types { for k in ["leaf", "wood", "root"] { let n = format!("c_{k}_{}", t.id); reads.push(n.clone()); writes.push(n); } }
@@ -95,6 +95,8 @@ impl Module for Plants {
         let c_air = view.stock(ids.c_air)?;
         let n_min = view.stock(eco.n_min)?;
         let p_min = view.stock(eco.p_min)?;
+        let n_org = view.stock(eco.n_org)?;
+        let p_org = view.stock(eco.p_org)?;
         let leaf: Vec<&[f32]> = eco.leaf.iter().map(|&s| view.stock(s)).collect::<Result<_, _>>()?;
         let wood: Vec<&[f32]> = eco.wood.iter().map(|&s| view.stock(s)).collect::<Result<_, _>>()?;
         let root: Vec<&[f32]> = eco.root.iter().map(|&s| view.stock(s)).collect::<Result<_, _>>()?;
@@ -104,7 +106,7 @@ impl Module for Plants {
         const L: usize = 8; // lanes per type
         let mut lanes: Vec<Vec<f32>> = (0..NPT * L).map(|_| vec![0f32; n]).collect();
         let mut used = vec![false; NPT * L];
-        let (mut n_up, mut p_up) = (vec![0f32; n], vec![0f32; n]);
+        let (mut n_net, mut p_net) = (vec![0f64; n], vec![0f64; n]);
         let mut any = false;
 
         for i in 0..n {
@@ -141,9 +143,9 @@ impl Module for Plants {
             let f_p = pm / (pm + KP_HALF);
             let f_nut = f_n.min(f_p);
             let resp_t = (2f32).powf((t_mean - 15.0) / 10.0).clamp(0.1, 4.0);
-            let (mut dn, mut dp) = (0f32, 0f32);
+            let (mut dn, mut dp) = (0f64, 0f64);
             for p in 0..NPT {
-                let (cl, cw, cr) = (leaf[p][i], wood[p][i], root[p][i]);
+                let (cl, cw, cr) = (leaf[p][i].max(0.0), wood[p][i].max(0.0), root[p][i].max(0.0));
                 if cl + cw + cr < 1e-9 { continue; }
                 let t = &set.types[p];
                 let ft = (0..4).map(|k| temp_factor(t, tq[k])).sum::<f32>() / 4.0;
@@ -174,14 +176,17 @@ impl Module for Plants {
                     }
                     lanes[base][i] = npp * al; lanes[base + 1][i] = npp * aw; lanes[base + 2][i] = npp * ar;
                     used[base] = true; used[base + 1] = true; used[base + 2] = true;
-                    dn += npp * (al / CN_LEAF + aw / CN_WOOD + ar / CN_ROOT);
-                    dp += npp * (al / CP_LEAF + aw / CP_WOOD + ar / CP_ROOT);
+                    dn += (npp * (al / CN_LEAF + aw / CN_WOOD + ar / CN_ROOT)) as f64;
+                    dp += (npp * (al / CP_LEAF + aw / CP_WOOD + ar / CP_ROOT)) as f64;
                 } else {
                     // respiration exceeds what the leaves bring in: it draws on leaves and roots
                     let draw = (-net).min(0.4 * (cl + cr));
                     if cl + cr > 0.0 {
                         lanes[base + 3][i] = draw * cl / (cl + cr); lanes[base + 4][i] = draw * cr / (cl + cr);
                         used[base + 3] = true; used[base + 4] = true;
+                        // the respired tissue gives its nitrogen and phosphorus back to the mineral pools
+                        dn -= ((lanes[base + 3][i]) / CN_LEAF + (lanes[base + 4][i]) / CN_ROOT) as f64;
+                        dp -= ((lanes[base + 3][i]) / CP_LEAF + (lanes[base + 4][i]) / CP_ROOT) as f64;
                     }
                 }
                 // turnover and death, to the litter
@@ -200,12 +205,21 @@ impl Module for Plants {
                 let k_root = (1.0 / t.turn_root.max(0.1) + mort).min(6.0) * dt_yr;
                 lanes[base + 5][i] = cl * (1.0 - (-k_leaf).exp()); lanes[base + 6][i] = cw * (1.0 - (-k_wood).exp()); lanes[base + 7][i] = cr * (1.0 - (-k_root).exp());
                 used[base + 5] = true; used[base + 6] = true; used[base + 7] = true;
+                // dead tissue becomes litter, which has its own C:N and C:P: it frees or takes nutrients
+                let (ll, lw, lr) = (lanes[base + 5][i] as f64, lanes[base + 6][i] as f64, lanes[base + 7][i] as f64);
+                dn += ll * (1.0 / CN[0] as f64 - 1.0 / CN_LEAF as f64) + lw * (1.0 / CN[0] as f64 - 1.0 / CN_WOOD as f64) + lr * (1.0 / CN[0] as f64 - 1.0 / CN_ROOT as f64);
+                dp += ll * (1.0 / CP[0] as f64 - 1.0 / CP_LEAF as f64) + lw * (1.0 / CP[0] as f64 - 1.0 / CP_WOOD as f64) + lr * (1.0 / CP[0] as f64 - 1.0 / CP_ROOT as f64);
                 any = true;
             }
             // mineral nutrients for the new tissue, never more than the pool has
             // the soil module may take up to 40 percent for itself, so plants stop at 30
-            n_up[i] = dn.min(0.3 * nm);
-            p_up[i] = dp.min(0.3 * pm);
+            // uptake is limited by the mineral pool, release by what the organic pool holds
+            n_net[i] = dn.min(0.3 * nm as f64).max(-0.15 * n_org[i].max(0.0) as f64);
+            p_net[i] = dp.min(0.3 * pm as f64).max(-0.15 * p_org[i].max(0.0) as f64);
+        }
+        if std::env::var("ODY_CHK").is_ok() {
+            for (k, l) in lanes.iter().enumerate() { if let Some(i) = l.iter().position(|v| !v.is_finite() || *v < 0.0) { eprintln!("bad lane {} (type {} lane {}) tile {} value {}", k, k / 8, k % 8, i, l[i]); break; } }
+            for (nm, v) in [("n_net", &n_net), ("p_net", &p_net)] { if let Some(i) = v.iter().position(|x| !x.is_finite()) { eprintln!("bad {} tile {}", nm, i); } }
         }
         if !any { return Ok(()); }
         for p in 0..NPT {
@@ -217,8 +231,15 @@ impl Module for Plants {
             if used[base + 4] { out.dense_local(pools[2], air, n).copy_from_slice(&lanes[base + 4]); }
             for k in 0..3 { if used[base + 5 + k] { out.dense_local(pools[k], eco.litter, n).copy_from_slice(&lanes[base + 5 + k]); } }
         }
+        let (mut n_up, mut n_dn, mut p_up, mut p_dn) = (vec![0f32; n], vec![0f32; n], vec![0f32; n], vec![0f32; n]);
+        for i in 0..n {
+            if n_net[i] >= 0.0 { n_up[i] = n_net[i] as f32 } else { n_dn[i] = (-n_net[i]) as f32 }
+            if p_net[i] >= 0.0 { p_up[i] = p_net[i] as f32 } else { p_dn[i] = (-p_net[i]) as f32 }
+        }
         out.dense_local(eco.n_min, eco.n_org, n).copy_from_slice(&n_up);
+        out.dense_local(eco.n_org, eco.n_min, n).copy_from_slice(&n_dn);
         out.dense_local(eco.p_min, eco.p_org, n).copy_from_slice(&p_up);
+        out.dense_local(eco.p_org, eco.p_min, n).copy_from_slice(&p_dn);
         Ok(())
     }
 }

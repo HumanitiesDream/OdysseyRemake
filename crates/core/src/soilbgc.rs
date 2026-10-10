@@ -53,7 +53,7 @@ impl SoilBgc { pub fn new(env: Env, eco: Eco) -> Self { SoilBgc { env, eco, ids:
 impl Module for SoilBgc {
     fn spec(&self) -> ModuleSpec {
         ModuleSpec::new("soilbgc", Phase::SoilPlants)
-            .reads(&["heat", "w_land", "w_sea", "c_air", "c_litter", "c_sfast", "c_sslow", "c_spass", "n_min", "p_min", "p_occ"])
+            .reads(&["heat", "w_land", "w_sea", "c_air", "c_litter", "c_sfast", "c_sslow", "c_spass", "n_min", "p_min", "p_occ", "n_org", "p_org"])
             .writes(&["c_air", "c_litter", "c_sfast", "c_sslow", "c_spass", "n_min", "n_org", "p_min", "p_org", "p_occ"])
             .boundaries(&["nfix", "nloss", "ploss"])
     }
@@ -71,6 +71,7 @@ impl Module for SoilBgc {
         let pools = [eco.litter, eco.sfast, eco.sslow, eco.spass];
         let c: Vec<&[f32]> = pools.iter().map(|&s| view.stock(s)).collect::<Result<_, _>>()?;
         let n_min = view.stock(eco.n_min)?; let p_min = view.stock(eco.p_min)?; let p_occ = view.stock(eco.p_occ)?;
+        let n_org = view.stock(eco.n_org)?; let p_org = view.stock(eco.p_org)?;
         // lanes: pool -> pool (4x4 off-diagonal), pool -> air (4), n and p exchanges
         let mut to_air: Vec<Vec<f32>> = (0..4).map(|_| vec![0f32; n]).collect();
         let mut move_: Vec<Vec<Vec<f32>>> = (0..4).map(|_| (0..4).map(|_| Vec::new()).collect()).collect();
@@ -108,8 +109,9 @@ impl Module for SoilBgc {
                     }
                 }
             }
-            if dn >= 0.0 { n_in[i] = (dn * s) as f32; } else { n_out[i] = (-dn * s) as f32; }
-            if dpp >= 0.0 { p_in[i] = (dpp * s) as f32; } else { p_out[i] = (-dpp * s) as f32; }
+            // mineralisation cannot free more than the organic pool holds (it can fall short of the ratios when nitrogen is scarce)
+            if dn >= 0.0 { n_in[i] = (dn * s).min(0.3 * n_org[i].max(0.0) as f64) as f32; } else { n_out[i] = (-dn * s) as f32; }
+            if dpp >= 0.0 { p_in[i] = (dpp * s).min(0.3 * p_org[i].max(0.0) as f64) as f32; } else { p_out[i] = (-dpp * s) as f32; }
             // inputs and losses of the mineral pools
             let f_in = ((tc + 5.0) / 25.0).clamp(0.0, 1.0) * (w / FIELD_CAP as f64).min(1.0);
             nfix[i] = (NFIX_KG_M2_YR * f_in * dt) as f32;

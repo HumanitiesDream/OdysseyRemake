@@ -30,12 +30,15 @@ impl File {
 #[derive(Debug, Default)]
 pub struct Content {
     pub files: BTreeMap<String, File>,
+    raw: BTreeMap<String, Value>,
     /// Sourced values flagged `verified: false`, as "file:path".
     pub unverified: Vec<String>,
 }
 
 impl Content {
     pub fn get(&self, kind: &str) -> Option<&File> { self.files.get(kind) }
+    /// The whole parsed file, for top-level fields such as constants.
+    pub fn raw(&self, kind: &str) -> Option<&Value> { self.raw.get(kind) }
 
     /// Load every file in `dir`. Fails on the first problem with a message naming file and path.
     pub fn load_dir(dir: &Path) -> Result<Content, String> {
@@ -69,6 +72,8 @@ impl Content {
                 pools.push(id.to_string());
             }
         }
+        if let Some(c) = v.get("constants") { check_numbers(c, "constants", label, &mut self.unverified)?; }
+        self.raw.insert(kind.into(), v.clone());
         self.files.insert(kind.into(), File { kind: kind.into(), items, pools });
         Ok(())
     }
@@ -119,7 +124,7 @@ mod tests {
         assert_eq!(c.get("animal_guilds").unwrap().items.len(), 14);
         assert!(c.get("rock_types").unwrap().item("sc").is_some());
         // the plant parameters taken from LPJmL are verified; the ones we chose ourselves are flagged
-        assert!(c.unverified.iter().all(|u| u.contains("plant_types")), "only our own plant assumptions are unverified");
+        assert!(c.unverified.iter().all(|u| u.contains("plant_types") || u.contains("animal_guilds")), "only our own assumptions are unverified");
         assert!(!c.unverified.is_empty());
     }
 

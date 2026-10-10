@@ -20,6 +20,7 @@ impl Module for Dispersal {
     fn spec(&self) -> ModuleSpec {
         let mut s = ModuleSpec::new("dispersal", Phase::SoilPlants).every(12).reads(&["w_sea"]).writes(&[]);
         for t in &self.set.types { let n = format!("c_leaf_{}", t.id); s.reads.push(n.clone()); s.writes.push(n); }
+        s.writes.push("n_org".into()); s.writes.push("p_org".into());
         s
     }
     fn bind(&mut self, _: &Registry, _: &Grid) -> Result<(), WorldError> { Ok(()) }
@@ -43,7 +44,12 @@ impl Module for Dispersal {
                     // diffusion flux over the shared edge; donors give at most one percent a year
                     let frac = (t.seed_d as f64 * dt / (dist * dist)).min(0.01 / 6.0);
                     let amount = frac * (li - lj) as f64 * grid.area_km2[i] as f64;
-                    if amount > 0.0 { out.push(Endpoint::Stock(self.eco.leaf[p]), Endpoint::Stock(self.eco.leaf[p]), i, j, amount); }
+                    if amount > 0.0 {
+                        out.push(Endpoint::Stock(self.eco.leaf[p]), Endpoint::Stock(self.eco.leaf[p]), i, j, amount);
+                        // seeds carry their nitrogen and phosphorus
+                        out.push(Endpoint::Stock(self.eco.n_org), Endpoint::Stock(self.eco.n_org), i, j, amount / CN_LEAF as f64);
+                        out.push(Endpoint::Stock(self.eco.p_org), Endpoint::Stock(self.eco.p_org), i, j, amount / CP_LEAF as f64);
+                    }
                 }
             }
         }

@@ -92,6 +92,8 @@ pub struct Phys {
     pub aerosol: StockId,
     /// plant cover of the base state plus one (zero until it is set)
     pub veg_ref: StockId,
+    /// tiles whose fire front burns on into the next month (1 or 0)
+    pub fire: StockId,
     // outside accounts
     pub b_sun: BoundaryId,
     pub b_space: BoundaryId,
@@ -139,9 +141,10 @@ impl Phys {
         let magma = reg.add_stock("magma", "m", Group::Sediment, Storage::Sparse);
         let aerosol = reg.add_stock("aerosol", "Mt/km2", Group::Diag, Storage::Exact);
         let veg_ref = reg.add_stock("veg_ref", "1", Group::Diag, Storage::Exact);
+        let fire = reg.add_stock("fire", "1", Group::Diag, Storage::Sparse);
         Phys {
             w_sea, w_seaice, w_air, w_land, w_ground, w_snow, w_ice, heat, heat_deep, c_air, c_ocean, c_deep,
-            rock, reg: regl, sed_g, sed_s, sed_m, defl, runoff_y, strain, magma, aerosol, veg_ref,
+            rock, reg: regl, sed_g, sed_s, sed_m, defl, runoff_y, strain, magma, aerosol, veg_ref, fire,
             b_sun: reg.add_boundary("sun", Group::Heat),
             b_space: reg.add_boundary("space", Group::Heat),
             b_season: reg.add_boundary("season", Group::Heat),

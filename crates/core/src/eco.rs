@@ -70,17 +70,92 @@ impl PlantSet {
     }
 }
 
+#[derive(Clone, Debug)]
+pub struct Guild {
+    pub id: String,
+    pub mass: f32,
+    pub reach: f32,
+    pub move_km: f32,
+    pub assim: f32,
+    /// plant types it eats and the share of their leaves it can reach
+    pub plants: Vec<(usize, f32)>,
+    /// terrestrial guilds it hunts and the weight of each
+    pub prey: Vec<(usize, f32)>,
+    pub eats_carcass: bool,
+    pub eats_litter: bool,
+    /// per year
+    pub i_max: f32, pub resp: f32, pub mort: f32,
+    pub endotherm: bool,
+}
+
+#[derive(Clone, Debug)]
+pub struct GuildSet {
+    /// land guilds, in content order without the fish
+    pub guilds: Vec<Guild>,
+    pub k_half: f32,
+    pub k_prey: f32,
+    pub disease: f32,
+}
+
+impl GuildSet {
+    pub fn from_content(c: &Content, plants: &PlantSet) -> Result<GuildSet, String> {
+        let f = c.get("animal_guilds").ok_or("no animal_guilds content")?;
+        let k = &f.items[0];
+        let _ = k;
+        let consts = c.raw("animal_guilds").ok_or("no raw animal_guilds")?["constants"].clone();
+        let cv = |key: &str| consts[key]["value"].as_f64().map(|x| x as f32).ok_or_else(|| format!("animal_guilds constants: no {key}"));
+        let (a_i, a_r, a_m, k_half, exp) = (cv("intake_coefficient")?, cv("respiration_coefficient")?, cv("mortality_coefficient")?, cv("half_saturation_food")?, cv("scaling_exponent")?);
+        let (k_prey, disease) = (cv("half_saturation_prey")?, cv("disease_density")?);
+        let land: Vec<&Value> = f.items.iter().filter(|it| it["id"] != "fish").collect();
+        let index = |id: &str| land.iter().position(|it| it["id"] == id);
+        let mut guilds = Vec::new();
+        for it in &land {
+            let id = it["id"].as_str().unwrap().to_string();
+            let mass = num(it, "body_mass_kg")?; let reach = num(it, "reach_m")?;
+            let mut plant_w: Vec<(usize, f32)> = Vec::new(); let mut prey: Vec<(usize, f32)> = Vec::new();
+            let (mut carcass, mut litter) = (false, false);
+            for e in it["eats"].as_array().unwrap() {
+                let e = e.as_str().unwrap();
+                let (head, tail) = e.split_once(':').unwrap();
+                match head {
+                    "plant" => {
+                        if let Some(p) = plants.types.iter().position(|t| t.id == tail) {
+                            let t = &plants.types[p];
+                            let acc = if t.woody { (reach / t.height).min(1.0) } else { 1.0 };
+                            if reach > 0.0 && acc > 0.0 { plant_w.push((p, acc)); }
+                        }
+                    }
+                    "guild" => { if let Some(q) = index(tail) {
+                        let w = if tail == "megaherbivore" { 0.05 } else { 1.0 };
+                        prey.push((q, w));
+                    } }
+                    "pool" => { if tail == "carcass" { carcass = true; } if tail == "litter" { litter = true; } }
+                    _ => {}
+                }
+            }
+            // insects feed on the leaves of everything, a little
+            if id == "insect" { plant_w = (0..plants.types.len()).map(|p| (p, 0.03)).collect(); }
+            let m = mass.max(1e-4);
+            guilds.push(Guild { id: id.clone(), mass, reach, move_km: num(it, "move_km_per_month")?, assim: num(it, "assimilation")?, plants: plant_w, prey, eats_carcass: carcass, eats_litter: litter,
+                i_max: a_i * m.powf(exp), resp: a_r * m.powf(exp), mort: a_m * m.powf(exp), endotherm: id != "insect" });
+        }
+        Ok(GuildSet { guilds, k_half, k_prey, disease })
+    }
+}
+
 /// Ids of the ecology stocks and accounts.
 #[derive(Clone, Debug)]
 pub struct Eco {
     pub leaf: Vec<StockId>, pub wood: Vec<StockId>, pub root: Vec<StockId>,
+    pub carcass: StockId,
+    pub fauna: Vec<StockId>,
     pub litter: StockId, pub sfast: StockId, pub sslow: StockId, pub spass: StockId,
     pub n_min: StockId, pub n_org: StockId, pub p_min: StockId, pub p_org: StockId, pub p_occ: StockId,
     pub b_nfix: BoundaryId, pub b_nloss: BoundaryId, pub b_rockp: BoundaryId, pub b_ploss: BoundaryId,
 }
 
 impl Eco {
-    pub fn register(reg: &mut Registry, set: &PlantSet) -> Eco {
+    pub fn register(reg: &mut Registry, set: &PlantSet, guilds: &GuildSet) -> Eco {
         let c = |reg: &mut Registry, n: String| reg.add_stock(&n, "kgC/m2", Group::Carbon, Storage::Exact);
         let mut leaf = vec![]; let mut wood = vec![]; let mut root = vec![];
         for t in &set.types {
@@ -89,13 +164,15 @@ impl Eco {
             root.push(c(reg, format!("c_root_{}", t.id)));
         }
         let litter = c(reg, "c_litter".into()); let sfast = c(reg, "c_sfast".into()); let sslow = c(reg, "c_sslow".into()); let spass = c(reg, "c_spass".into());
+        let carcass = c(reg, "c_carcass".into());
+        let fauna: Vec<StockId> = guilds.guilds.iter().map(|g| c(reg, format!("c_fauna_{}", g.id))).collect();
         let n_min = reg.add_stock("n_min", "kgN/m2", Group::Nitrogen, Storage::Exact);
         let n_org = reg.add_stock("n_org", "kgN/m2", Group::Nitrogen, Storage::Exact);
         let p_min = reg.add_stock("p_min", "kgP/m2", Group::Phosphorus, Storage::Exact);
         let p_org = reg.add_stock("p_org", "kgP/m2", Group::Phosphorus, Storage::Exact);
         let p_occ = reg.add_stock("p_occ", "kgP/m2", Group::Phosphorus, Storage::Exact);
         Eco {
-            leaf, wood, root, litter, sfast, sslow, spass, n_min, n_org, p_min, p_org, p_occ,
+            leaf, wood, root, carcass, fauna, litter, sfast, sslow, spass, n_min, n_org, p_min, p_org, p_occ,
             b_nfix: reg.add_boundary("nfix", Group::Nitrogen), b_nloss: reg.add_boundary("nloss", Group::Nitrogen),
             b_rockp: reg.add_boundary("rockp", Group::Phosphorus), b_ploss: reg.add_boundary("ploss", Group::Phosphorus),
         }

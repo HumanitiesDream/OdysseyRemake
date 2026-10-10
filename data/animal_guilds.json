@@ -1,27 +1,536 @@
 {
-  "kind": "animal_guilds",
-  "version": 1,
-  "pools": [
-    { "id": "carcass", "name": "Carcasses", "source": "REDESIGN-PLAN.md, Ecology, the food web" },
-    { "id": "dung", "name": "Dung", "source": "REDESIGN-PLAN.md, Ecology, the food web" },
-    { "id": "litter", "name": "Plant litter", "source": "REDESIGN-PLAN.md, Ecology, the food web" },
-    { "id": "plankton", "name": "Plankton", "source": "REDESIGN-PLAN.md, Ecology, rebuild point 7" },
-    { "id": "seeds", "name": "Seeds", "source": "REDESIGN-PLAN.md, Ecology, the food web" }
-  ],
-  "items": [
-    { "id": "megaherbivore", "name": "Megaherbivores", "eats": ["plant:c3_grass", "plant:c4_grass", "plant:shrub", "plant:temperate_broadleaf"], "source": "REDESIGN-PLAN.md, food web table (grass, browse, trees pushed over)" },
-    { "id": "large_grazer", "name": "Large grazers", "eats": ["plant:c3_grass", "plant:c4_grass"], "source": "REDESIGN-PLAN.md, food web table (grazers eat grass)" },
-    { "id": "medium_grazer", "name": "Medium grazers", "eats": ["plant:c3_grass", "plant:c4_grass"], "source": "REDESIGN-PLAN.md, food web table" },
-    { "id": "large_browser", "name": "Large browsers", "eats": ["plant:shrub", "plant:temperate_broadleaf", "plant:boreal_summergreen"], "source": "REDESIGN-PLAN.md, food web table (browsers eat shrub and tree leaves, seedlings)" },
-    { "id": "medium_browser", "name": "Medium browsers", "eats": ["plant:shrub", "plant:temperate_broadleaf", "plant:boreal_summergreen"], "source": "REDESIGN-PLAN.md, food web table" },
-    { "id": "small_herbivore", "name": "Small herbivores", "eats": ["pool:seeds", "plant:c3_grass", "plant:c4_grass"], "source": "REDESIGN-PLAN.md, food web table (seeds, grass, roots)" },
-    { "id": "insect", "name": "Insects", "eats": ["plant:temperate_broadleaf", "pool:dung", "pool:litter"], "source": "REDESIGN-PLAN.md, food web table (leaves, wood, dung, litter)" },
-    { "id": "insectivore", "name": "Insectivores", "eats": ["guild:insect", "pool:seeds"], "source": "REDESIGN-PLAN.md, food web table" },
-    { "id": "bird", "name": "Birds", "eats": ["guild:insect", "pool:seeds"], "source": "REDESIGN-PLAN.md, food web table (insectivores and birds)" },
-    { "id": "small_carnivore", "name": "Small carnivores", "eats": ["guild:small_herbivore", "guild:bird", "guild:insect"], "source": "REDESIGN-PLAN.md, food web table (fox, weasel)" },
-    { "id": "medium_carnivore", "name": "Medium carnivores", "eats": ["guild:large_grazer", "guild:medium_grazer", "guild:large_browser", "guild:medium_browser", "guild:small_carnivore"], "source": "REDESIGN-PLAN.md, food web table (wolf, leopard)" },
-    { "id": "large_carnivore", "name": "Large carnivores", "eats": ["guild:megaherbivore", "guild:large_grazer", "guild:large_browser", "guild:medium_carnivore", "guild:fish"], "source": "REDESIGN-PLAN.md, food web table (lion, bear; megaherbivore young only)" },
-    { "id": "scavenger", "name": "Scavengers and decomposers", "eats": ["pool:carcass", "pool:dung", "pool:litter"], "source": "REDESIGN-PLAN.md, food web table" },
-    { "id": "fish", "name": "Fish", "eats": ["pool:plankton", "guild:insect", "guild:fish"], "source": "REDESIGN-PLAN.md, food web table (plankton, insects, smaller fish)" }
-  ]
+ "kind": "animal_guilds",
+ "version": 2,
+ "pools": [
+  {
+   "id": "carcass",
+   "name": "Carcasses",
+   "source": "REDESIGN-PLAN.md, Ecology, the food web"
+  },
+  {
+   "id": "dung",
+   "name": "Dung",
+   "source": "REDESIGN-PLAN.md, Ecology, the food web"
+  },
+  {
+   "id": "litter",
+   "name": "Plant litter",
+   "source": "REDESIGN-PLAN.md, Ecology, the food web"
+  },
+  {
+   "id": "plankton",
+   "name": "Plankton",
+   "source": "REDESIGN-PLAN.md, Ecology, rebuild point 7"
+  },
+  {
+   "id": "seeds",
+   "name": "Seeds",
+   "source": "REDESIGN-PLAN.md, Ecology, the food web"
+  }
+ ],
+ "items": [
+  {
+   "id": "megaherbivore",
+   "name": "Megaherbivores",
+   "eats": [
+    "plant:c3_grass",
+    "plant:c4_grass",
+    "plant:shrub",
+    "plant:temperate_broadleaf"
+   ],
+   "source": "REDESIGN-PLAN.md, food web table (grass, browse, trees pushed over)",
+   "body_mass_kg": {
+    "value": 2500,
+    "source": "assumption (docs/DECISIONS.md): typical body mass of the species that fill this guild",
+    "verified": false,
+    "unit": "kg"
+   },
+   "reach_m": {
+    "value": 8,
+    "source": "assumption: height of the food the guild can reach",
+    "verified": false,
+    "unit": "m"
+   },
+   "move_km_per_month": {
+    "value": 40,
+    "source": "assumption: typical monthly range shift; seasonal migrants go further (docs/DECISIONS.md)",
+    "verified": false,
+    "unit": "km"
+   },
+   "assimilation": {
+    "value": 0.45,
+    "source": "assumption: typical assimilation efficiency of the diet class (herbivores 0.4 to 0.6, carnivores 0.8 to 0.9)",
+    "verified": false
+   }
+  },
+  {
+   "id": "large_grazer",
+   "name": "Large grazers",
+   "eats": [
+    "plant:c3_grass",
+    "plant:c4_grass"
+   ],
+   "source": "REDESIGN-PLAN.md, food web table (grazers eat grass)",
+   "body_mass_kg": {
+    "value": 300,
+    "source": "assumption (docs/DECISIONS.md): typical body mass of the species that fill this guild",
+    "verified": false,
+    "unit": "kg"
+   },
+   "reach_m": {
+    "value": 1.2,
+    "source": "assumption: height of the food the guild can reach",
+    "verified": false,
+    "unit": "m"
+   },
+   "move_km_per_month": {
+    "value": 80,
+    "source": "assumption: typical monthly range shift; seasonal migrants go further (docs/DECISIONS.md)",
+    "verified": false,
+    "unit": "km"
+   },
+   "assimilation": {
+    "value": 0.5,
+    "source": "assumption: typical assimilation efficiency of the diet class (herbivores 0.4 to 0.6, carnivores 0.8 to 0.9)",
+    "verified": false
+   }
+  },
+  {
+   "id": "medium_grazer",
+   "name": "Medium grazers",
+   "eats": [
+    "plant:c3_grass",
+    "plant:c4_grass"
+   ],
+   "source": "REDESIGN-PLAN.md, food web table",
+   "body_mass_kg": {
+    "value": 40,
+    "source": "assumption (docs/DECISIONS.md): typical body mass of the species that fill this guild",
+    "verified": false,
+    "unit": "kg"
+   },
+   "reach_m": {
+    "value": 0.8,
+    "source": "assumption: height of the food the guild can reach",
+    "verified": false,
+    "unit": "m"
+   },
+   "move_km_per_month": {
+    "value": 40,
+    "source": "assumption: typical monthly range shift; seasonal migrants go further (docs/DECISIONS.md)",
+    "verified": false,
+    "unit": "km"
+   },
+   "assimilation": {
+    "value": 0.55,
+    "source": "assumption: typical assimilation efficiency of the diet class (herbivores 0.4 to 0.6, carnivores 0.8 to 0.9)",
+    "verified": false
+   }
+  },
+  {
+   "id": "large_browser",
+   "name": "Large browsers",
+   "eats": [
+    "plant:shrub",
+    "plant:temperate_broadleaf",
+    "plant:boreal_summergreen"
+   ],
+   "source": "REDESIGN-PLAN.md, food web table (browsers eat shrub and tree leaves, seedlings)",
+   "body_mass_kg": {
+    "value": 250,
+    "source": "assumption (docs/DECISIONS.md): typical body mass of the species that fill this guild",
+    "verified": false,
+    "unit": "kg"
+   },
+   "reach_m": {
+    "value": 5,
+    "source": "assumption: height of the food the guild can reach",
+    "verified": false,
+    "unit": "m"
+   },
+   "move_km_per_month": {
+    "value": 25,
+    "source": "assumption: typical monthly range shift; seasonal migrants go further (docs/DECISIONS.md)",
+    "verified": false,
+    "unit": "km"
+   },
+   "assimilation": {
+    "value": 0.55,
+    "source": "assumption: typical assimilation efficiency of the diet class (herbivores 0.4 to 0.6, carnivores 0.8 to 0.9)",
+    "verified": false
+   }
+  },
+  {
+   "id": "medium_browser",
+   "name": "Medium browsers",
+   "eats": [
+    "plant:shrub",
+    "plant:temperate_broadleaf",
+    "plant:boreal_summergreen"
+   ],
+   "source": "REDESIGN-PLAN.md, food web table",
+   "body_mass_kg": {
+    "value": 30,
+    "source": "assumption (docs/DECISIONS.md): typical body mass of the species that fill this guild",
+    "verified": false,
+    "unit": "kg"
+   },
+   "reach_m": {
+    "value": 1.8,
+    "source": "assumption: height of the food the guild can reach",
+    "verified": false,
+    "unit": "m"
+   },
+   "move_km_per_month": {
+    "value": 15,
+    "source": "assumption: typical monthly range shift; seasonal migrants go further (docs/DECISIONS.md)",
+    "verified": false,
+    "unit": "km"
+   },
+   "assimilation": {
+    "value": 0.6,
+    "source": "assumption: typical assimilation efficiency of the diet class (herbivores 0.4 to 0.6, carnivores 0.8 to 0.9)",
+    "verified": false
+   }
+  },
+  {
+   "id": "small_herbivore",
+   "name": "Small herbivores",
+   "eats": [
+    "pool:seeds",
+    "plant:c3_grass",
+    "plant:c4_grass"
+   ],
+   "source": "REDESIGN-PLAN.md, food web table (seeds, grass, roots)",
+   "body_mass_kg": {
+    "value": 0.1,
+    "source": "assumption (docs/DECISIONS.md): typical body mass of the species that fill this guild",
+    "verified": false,
+    "unit": "kg"
+   },
+   "reach_m": {
+    "value": 0.5,
+    "source": "assumption: height of the food the guild can reach",
+    "verified": false,
+    "unit": "m"
+   },
+   "move_km_per_month": {
+    "value": 2,
+    "source": "assumption: typical monthly range shift; seasonal migrants go further (docs/DECISIONS.md)",
+    "verified": false,
+    "unit": "km"
+   },
+   "assimilation": {
+    "value": 0.6,
+    "source": "assumption: typical assimilation efficiency of the diet class (herbivores 0.4 to 0.6, carnivores 0.8 to 0.9)",
+    "verified": false
+   }
+  },
+  {
+   "id": "insect",
+   "name": "Insects",
+   "eats": [
+    "plant:temperate_broadleaf",
+    "plant:c3_grass",
+    "plant:c4_grass",
+    "pool:dung"
+   ],
+   "source": "REDESIGN-PLAN.md, food web table (leaves, wood, dung, litter)",
+   "body_mass_kg": {
+    "value": 0.0005,
+    "source": "assumption (docs/DECISIONS.md): typical body mass of the species that fill this guild",
+    "verified": false,
+    "unit": "kg"
+   },
+   "reach_m": {
+    "value": 2,
+    "source": "assumption: height of the food the guild can reach",
+    "verified": false,
+    "unit": "m"
+   },
+   "move_km_per_month": {
+    "value": 5,
+    "source": "assumption: typical monthly range shift; seasonal migrants go further (docs/DECISIONS.md)",
+    "verified": false,
+    "unit": "km"
+   },
+   "assimilation": {
+    "value": 0.4,
+    "source": "assumption: typical assimilation efficiency of the diet class (herbivores 0.4 to 0.6, carnivores 0.8 to 0.9)",
+    "verified": false
+   }
+  },
+  {
+   "id": "insectivore",
+   "name": "Insectivores",
+   "eats": [
+    "guild:insect",
+    "pool:seeds"
+   ],
+   "source": "REDESIGN-PLAN.md, food web table",
+   "body_mass_kg": {
+    "value": 0.02,
+    "source": "assumption (docs/DECISIONS.md): typical body mass of the species that fill this guild",
+    "verified": false,
+    "unit": "kg"
+   },
+   "reach_m": {
+    "value": 0,
+    "source": "assumption: height of the food the guild can reach",
+    "verified": false,
+    "unit": "m"
+   },
+   "move_km_per_month": {
+    "value": 8,
+    "source": "assumption: typical monthly range shift; seasonal migrants go further (docs/DECISIONS.md)",
+    "verified": false,
+    "unit": "km"
+   },
+   "assimilation": {
+    "value": 0.8,
+    "source": "assumption: typical assimilation efficiency of the diet class (herbivores 0.4 to 0.6, carnivores 0.8 to 0.9)",
+    "verified": false
+   }
+  },
+  {
+   "id": "bird",
+   "name": "Birds",
+   "eats": [
+    "guild:insect",
+    "pool:seeds"
+   ],
+   "source": "REDESIGN-PLAN.md, food web table (insectivores and birds)",
+   "body_mass_kg": {
+    "value": 0.2,
+    "source": "assumption (docs/DECISIONS.md): typical body mass of the species that fill this guild",
+    "verified": false,
+    "unit": "kg"
+   },
+   "reach_m": {
+    "value": 0,
+    "source": "assumption: height of the food the guild can reach",
+    "verified": false,
+    "unit": "m"
+   },
+   "move_km_per_month": {
+    "value": 200,
+    "source": "assumption: typical monthly range shift; seasonal migrants go further (docs/DECISIONS.md)",
+    "verified": false,
+    "unit": "km"
+   },
+   "assimilation": {
+    "value": 0.8,
+    "source": "assumption: typical assimilation efficiency of the diet class (herbivores 0.4 to 0.6, carnivores 0.8 to 0.9)",
+    "verified": false
+   }
+  },
+  {
+   "id": "small_carnivore",
+   "name": "Small carnivores",
+   "eats": [
+    "guild:small_herbivore",
+    "guild:bird",
+    "guild:insect"
+   ],
+   "source": "REDESIGN-PLAN.md, food web table (fox, weasel)",
+   "body_mass_kg": {
+    "value": 3,
+    "source": "assumption (docs/DECISIONS.md): typical body mass of the species that fill this guild",
+    "verified": false,
+    "unit": "kg"
+   },
+   "reach_m": {
+    "value": 0,
+    "source": "assumption: height of the food the guild can reach",
+    "verified": false,
+    "unit": "m"
+   },
+   "move_km_per_month": {
+    "value": 10,
+    "source": "assumption: typical monthly range shift; seasonal migrants go further (docs/DECISIONS.md)",
+    "verified": false,
+    "unit": "km"
+   },
+   "assimilation": {
+    "value": 0.85,
+    "source": "assumption: typical assimilation efficiency of the diet class (herbivores 0.4 to 0.6, carnivores 0.8 to 0.9)",
+    "verified": false
+   }
+  },
+  {
+   "id": "medium_carnivore",
+   "name": "Medium carnivores",
+   "eats": [
+    "guild:large_grazer",
+    "guild:medium_grazer",
+    "guild:large_browser",
+    "guild:medium_browser",
+    "guild:small_carnivore"
+   ],
+   "source": "REDESIGN-PLAN.md, food web table (wolf, leopard)",
+   "body_mass_kg": {
+    "value": 30,
+    "source": "assumption (docs/DECISIONS.md): typical body mass of the species that fill this guild",
+    "verified": false,
+    "unit": "kg"
+   },
+   "reach_m": {
+    "value": 0,
+    "source": "assumption: height of the food the guild can reach",
+    "verified": false,
+    "unit": "m"
+   },
+   "move_km_per_month": {
+    "value": 40,
+    "source": "assumption: typical monthly range shift; seasonal migrants go further (docs/DECISIONS.md)",
+    "verified": false,
+    "unit": "km"
+   },
+   "assimilation": {
+    "value": 0.85,
+    "source": "assumption: typical assimilation efficiency of the diet class (herbivores 0.4 to 0.6, carnivores 0.8 to 0.9)",
+    "verified": false
+   }
+  },
+  {
+   "id": "large_carnivore",
+   "name": "Large carnivores",
+   "eats": [
+    "guild:megaherbivore",
+    "guild:large_grazer",
+    "guild:large_browser",
+    "guild:medium_carnivore",
+    "guild:fish"
+   ],
+   "source": "REDESIGN-PLAN.md, food web table (lion, bear; megaherbivore young only)",
+   "body_mass_kg": {
+    "value": 200,
+    "source": "assumption (docs/DECISIONS.md): typical body mass of the species that fill this guild",
+    "verified": false,
+    "unit": "kg"
+   },
+   "reach_m": {
+    "value": 0,
+    "source": "assumption: height of the food the guild can reach",
+    "verified": false,
+    "unit": "m"
+   },
+   "move_km_per_month": {
+    "value": 30,
+    "source": "assumption: typical monthly range shift; seasonal migrants go further (docs/DECISIONS.md)",
+    "verified": false,
+    "unit": "km"
+   },
+   "assimilation": {
+    "value": 0.85,
+    "source": "assumption: typical assimilation efficiency of the diet class (herbivores 0.4 to 0.6, carnivores 0.8 to 0.9)",
+    "verified": false
+   }
+  },
+  {
+   "id": "scavenger",
+   "name": "Scavengers and decomposers",
+   "eats": [
+    "pool:carcass",
+    "pool:dung"
+   ],
+   "source": "REDESIGN-PLAN.md, food web table",
+   "body_mass_kg": {
+    "value": 5,
+    "source": "assumption (docs/DECISIONS.md): typical body mass of the species that fill this guild",
+    "verified": false,
+    "unit": "kg"
+   },
+   "reach_m": {
+    "value": 0,
+    "source": "assumption: height of the food the guild can reach",
+    "verified": false,
+    "unit": "m"
+   },
+   "move_km_per_month": {
+    "value": 50,
+    "source": "assumption: typical monthly range shift; seasonal migrants go further (docs/DECISIONS.md)",
+    "verified": false,
+    "unit": "km"
+   },
+   "assimilation": {
+    "value": 0.7,
+    "source": "assumption: typical assimilation efficiency of the diet class (herbivores 0.4 to 0.6, carnivores 0.8 to 0.9)",
+    "verified": false
+   }
+  },
+  {
+   "id": "fish",
+   "name": "Fish",
+   "eats": [
+    "pool:plankton",
+    "guild:insect",
+    "guild:fish"
+   ],
+   "source": "REDESIGN-PLAN.md, food web table (plankton, insects, smaller fish)",
+   "body_mass_kg": {
+    "value": 1,
+    "source": "assumption (docs/DECISIONS.md): typical body mass of the species that fill this guild",
+    "verified": false,
+    "unit": "kg"
+   },
+   "reach_m": {
+    "value": 0,
+    "source": "assumption: height of the food the guild can reach",
+    "verified": false,
+    "unit": "m"
+   },
+   "move_km_per_month": {
+    "value": 0,
+    "source": "assumption: typical monthly range shift; seasonal migrants go further (docs/DECISIONS.md)",
+    "verified": false,
+    "unit": "km"
+   },
+   "assimilation": {
+    "value": 0.8,
+    "source": "assumption: typical assimilation efficiency of the diet class (herbivores 0.4 to 0.6, carnivores 0.8 to 0.9)",
+    "verified": false
+   }
+  }
+ ],
+ "constants": {
+  "intake_coefficient": {
+   "value": 12.0,
+   "source": "assumption, tuned so that large herbivores reach about 1 to 5 g C per m2 on savanna (Serengeti large herbivore biomass is about 2e4 kg/km2 wet): maximum intake in kgC per kgC of body per year at 1 kg body mass, scaled by mass to the minus one quarter (Brown et al. 2004)",
+   "verified": false
+  },
+  "respiration_coefficient": {
+   "value": 3.0,
+   "source": "assumption, tuned: respiration in kgC per kgC of body per year at 1 kg body mass, scaled by mass to the minus one quarter (Brown et al. 2004)",
+   "verified": false
+  },
+  "mortality_coefficient": {
+   "value": 0.12,
+   "source": "assumption, tuned: natural mortality per year at 1 kg body mass, scaled by mass to the minus one quarter",
+   "verified": false
+  },
+  "half_saturation_food": {
+   "value": 0.01,
+   "source": "assumption, tuned: leaf carbon density at which a herbivore eats half its maximum, kgC/m2 (Holling type II)",
+   "verified": false,
+   "unit": "kgC/m2"
+  },
+  "scaling_exponent": {
+   "value": -0.25,
+   "source": "Brown et al. 2004, Toward a metabolic theory of ecology: rates scale as mass to the minus one quarter",
+   "verified": true
+  },
+  "half_saturation_prey": {
+   "value": 0.002,
+   "source": "assumption, tuned: prey carbon density at which a predator eats half its maximum, kgC/m2",
+   "verified": false,
+   "unit": "kgC/m2"
+  },
+  "disease_density": {
+   "value": 0.02,
+   "source": "assumption: biomass density, kgC/m2, at which crowding disease doubles mortality",
+   "verified": false,
+   "unit": "kgC/m2"
+  }
+ }
 }
