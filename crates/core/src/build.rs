@@ -4,7 +4,12 @@ use crate::carbon::{AirMix, OceanCarbon, DEEP_DIC, SURF_DIC};
 use crate::climate::{Climate, ClimateParams, PPM_PER_KGC_M2, HD_OFF};
 use crate::hazards::{HazardMap, Quakes, Volcanoes};
 use crate::hydro::Hydro;
+use crate::content::Content;
 use crate::crust::Crust;
+use crate::dispersal::Dispersal;
+use crate::eco::{Eco, PlantSet, NPT, CN, CP};
+use crate::plants::Plants;
+use crate::soilbgc::{initial_pools, SoilBgc};
 use crate::ice::IceFlow;
 use crate::landscape::{initial_regolith, Landscape};
 use crate::sea::{SeaIce, SeaLevel};
@@ -57,8 +62,13 @@ pub fn build(s: &Setup) -> Result<Built, String> {
     let n = planet.n;
     let mut reg = Registry::new();
     let ph = Phys::register(&mut reg);
+    let content = Content::load_dir(&data_dir())?;
+    let set = PlantSet::from_content(&content)?;
+    let eco = Eco::register(&mut reg, &set);
     // open sea at the start: not land, and not a marine basin filled by grounded ice
-    let ocean0: Vec<bool> = (0..n).map(|i| !planet.earth.is_land(i) && planet.earth.ice[i] < 100.0).collect();
+    // (ice that is too thin to hold its bed down floats: it belongs to the sea, not to the ice sheet)
+    let grounded: Vec<bool> = (0..n).map(|i| planet.earth.ice[i] > 20.0 && planet.earth.ice[i] > 1.12 * (-planet.bed0[i]).max(0.0)).collect();
+    let ocean0: Vec<bool> = (0..n).map(|i| !planet.earth.is_land(i) && !grounded[i]).collect();
     let tobs = Arc::new(planet.earth.tair.clone());
     let mut env = Env { p: planet.clone(), ph: ph.clone(), base: Arc::new(vec![0.0; n]), ocean0: Arc::new(ocean0), tobs };
     // today's bed height already holds today's soil: rock + regolith = datum + bed
@@ -80,18 +90,40 @@ pub fn build(s: &Setup) -> Result<Built, String> {
     // today's ice sheets and glaciers: the mean thickness of the tile in every band
     for i in 0..n {
         let thick = planet.earth.ice[i];
-        if thick > 20.0 && !env.ocean0[i] { for b in 0..BANDS { world.stock_mut(ph.w_ice[b])[i] = thick * RHO_ICE / BANDS as f32; } }
+        if grounded[i] { for b in 0..BANDS { world.stock_mut(ph.w_ice[b])[i] = thick * RHO_ICE / BANDS as f32; } }
     }
     // sea: fill the open ocean to sea level 0 (m); soil water and groundwater start moist
     for i in 0..n {
         let zb: Vec<f32> = (0..BANDS).map(|b| planet.z0_band(i, b)).collect();
         // sea water in every low band that lies under sea level 0, except where grounded ice sits
-        let grounded = planet.earth.ice[i] > 100.0;
         let d = crate::sea::depth_at(&zb, 0.0);
-        if !grounded { world.stock_mut(ph.w_sea)[i] = d * 1000.0; }
+        if !grounded[i] { world.stock_mut(ph.w_sea)[i] = d * 1000.0; }
         if !ocean_tile(&env, i) { world.stock_mut(ph.w_land)[i] = 150.0; world.stock_mut(ph.w_ground)[i] = 75.0; }
     }
     let _ = area;
+    // the living land: soil pools by climate, and a seed of every type that the climate can carry
+    for i in 0..n {
+        if env.ocean0[i] || grounded[i] { continue; }
+        let t_ann: f64 = (0..12).map(|m| env.tobs[m][i] as f64).sum::<f64>() / 12.0 - 273.15;
+        let prec: f64 = (0..12).map(|m| planet.earth.prec[m][i] as f64).sum();
+        let pools = initial_pools(t_ann, prec);
+        let ids = [eco.litter, eco.sfast, eco.sslow, eco.spass];
+        let (mut n_org, mut p_org) = (0f32, 0f32);
+        for k in 0..4 { world.stock_mut(ids[k])[i] = pools[k]; n_org += pools[k] / CN[k]; p_org += pools[k] / CP[k]; }
+        let tcold = (0..12).map(|m| env.tobs[m][i]).fold(f32::MAX, f32::min) - 273.15;
+        let tmax = (0..12).map(|m| env.tobs[m][i]).fold(f32::MIN, f32::max) - 273.15;
+        let mut seeded = 0f32;
+        for (p, t) in set.types.iter().enumerate() {
+            let fits = tcold >= t.cold_min && tcold <= t.cold_max && tmax > t.t_min + 5.0 && prec > t.aprec_min_mm() as f64;
+            if fits { world.stock_mut(eco.leaf[p])[i] = 0.02; world.stock_mut(eco.root[p])[i] = 0.02; seeded += 0.04 / crate::eco::CN_LEAF; }
+        }
+        world.stock_mut(eco.n_org)[i] = n_org + seeded;
+        world.stock_mut(eco.p_org)[i] = p_org + seeded * 0.07;
+        world.stock_mut(eco.n_min)[i] = 0.003;
+        world.stock_mut(eco.p_min)[i] = 4.0e-5;
+        world.stock_mut(eco.p_occ)[i] = 4.0e-4;
+    }
+    let _ = NPT;
     world.reset_ledger();
     let mut sim = Sim::new(world);
     let keep = |name: &str| s.only.as_ref().map_or(true, |v| v.iter().any(|x| x == name));
@@ -109,7 +141,10 @@ pub fn build(s: &Setup) -> Result<Built, String> {
     add(&mut sim, "volcanoes", Box::new(Volcanoes::new(env.clone(), hz.clone())))?;
     add(&mut sim, "climate", Box::new(Climate::new(env.clone(), s.climate.clone())))?;
     add(&mut sim, "seaice", Box::new(SeaIce::new(env.clone())))?;
-    add(&mut sim, "hydro", Box::new(Hydro::new(env.clone())))?;
+    add(&mut sim, "hydro", Box::new(Hydro::new(env.clone(), set.clone(), eco.clone())))?;
+    add(&mut sim, "plants", Box::new(Plants::new(env.clone(), set.clone(), eco.clone())))?;
+    add(&mut sim, "soilbgc", Box::new(SoilBgc::new(env.clone(), eco.clone())))?;
+    add(&mut sim, "dispersal", Box::new(Dispersal::new(env.clone(), set.clone(), eco.clone())))?;
     add(&mut sim, "iceflow", Box::new(IceFlow::new(env.clone())))?;
     add(&mut sim, "crust", Box::new(Crust::new(env.clone(), base_load)))?;
     let share: Vec<f32> = { let w: Vec<f64> = (0..n).map(|i| hz.magma_m[i] * grid.area_km2[i] as f64).collect(); let sum: f64 = w.iter().sum::<f64>().max(1e-30); w.iter().map(|&x| (x / sum) as f32).collect() };

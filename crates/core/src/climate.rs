@@ -103,14 +103,12 @@ struct Ids { heat: StockId, deep: StockId, c_air: StockId, aerosol: StockId, w_i
 
 impl Climate {
     pub fn new(env: Env, prm: ClimateParams) -> Climate {
-        let f_landice0 = env.p.earth.ice.iter().map(|&t| if t > 50.0 { 1.0 } else { 0.0 }).collect();
+        let f_landice0 = env.p.earth.ice.iter().zip(env.ocean0.iter()).map(|(&t, &o)| if o || t <= 20.0 { 0.0 } else { (t / 50.0).min(1.0) }).collect();
         Climate { env, prm, ids: None, mix: None, now: None, reference: None, f_landice0 }
     }
     fn f_landice(&self, i: usize, ice: &[&[f32]]) -> f32 {
-        // land ice share: bands with more than 10 m of ice count as covered
-        let mut c = 0;
-        for b in 0..ice.len() { if Env::ice_m(ice[b][i]) > 10.0 { c += 1; } }
-        c as f32 / ice.len() as f32
+        // land ice cover: a band is covered once it holds 50 m of ice, partly covered below that
+        (0..ice.len()).map(|b| (Env::ice_m(ice[b][i]) / 50.0).clamp(0.0, 1.0)).sum::<f32>() / ice.len() as f32
     }
 }
 

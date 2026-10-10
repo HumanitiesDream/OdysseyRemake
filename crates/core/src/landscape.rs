@@ -38,6 +38,8 @@ pub const SEDIMENT_TARGET_KG: f64 = 19.0e12; // kg per year, Milliman and Farnsw
 pub const RHO_SED: f64 = 2700.0;
 /// kg C taken from the air for each m3 of rock weathered: with about 7e9 m3 a year this is about 0.1 GtC/yr,
 /// the order of the silicate weathering sink (Gaillardet et al. 1999; figure to be re-checked).
+/// kg of phosphorus released per m3 of rock weathered (about 0.01 percent of the mass, a typical crustal figure to be checked).
+pub const ROCK_P_KG_PER_M3: f64 = 0.27;
 pub const CO2_PER_M3: f64 = 14.0;
 const M3_PER_MKM2: f64 = 1.0e6; // one m x km2 is 1e6 m3
 pub const SEC_PER_YEAR: f64 = crate::units::SECONDS_PER_YEAR;
@@ -81,7 +83,7 @@ pub struct Landscape {
 }
 struct Ids {
     rock: StockId, reg: StockId, sg: StockId, ss: StockId, sm: StockId, defl: StockId,
-    sea: StockId, heat: StockId, runoff: StockId, c_air: StockId, c_deep: StockId, ice: Vec<StockId>,
+    sea: StockId, heat: StockId, runoff: StockId, c_air: StockId, c_deep: StockId, p_min: StockId, b_rockp: crate::stocks::BoundaryId, ice: Vec<StockId>,
 }
 
 struct Year { shift: Vec<f32>, sea: Vec<bool>, surface: Vec<f32>, runoff_mm: Vec<f32>, t_ann: Vec<f64>, icy: Vec<bool> }
@@ -219,15 +221,15 @@ impl Landscape {
 
 impl Module for Landscape {
     fn spec(&self) -> ModuleSpec {
-        let mut s = ModuleSpec::new("landscape", Phase::SoilPlants).every(12).boundaries(&["uplift", "abyss", "diag", "volcano", "burial"]);
+        let mut s = ModuleSpec::new("landscape", Phase::SoilPlants).every(12).boundaries(&["uplift", "abyss", "diag", "volcano", "burial", "rockp"]);
         s.reads = ["rock", "reg", "sed_g", "sed_s", "sed_m", "defl", "w_sea", "heat", "runoff_y", "c_air", "c_deep"].iter().map(|x| x.to_string()).chain((0..BANDS).map(|b| format!("w_ice{b}"))).collect();
-        s.writes = ["rock", "reg", "sed_g", "sed_s", "sed_m", "runoff_y", "c_air", "c_deep"].iter().map(|x| x.to_string()).collect();
+        s.writes = ["rock", "reg", "sed_g", "sed_s", "sed_m", "runoff_y", "c_air", "c_deep", "p_min"].iter().map(|x| x.to_string()).collect();
         s
     }
     fn bind(&mut self, reg: &Registry, _: &Grid) -> Result<(), WorldError> {
         let g = |n: &str| reg.stock(n).ok_or_else(|| WorldError::Unknown(n.into()));
         self.ids = Some(Ids { rock: g("rock")?, reg: g("reg")?, sg: g("sed_g")?, ss: g("sed_s")?, sm: g("sed_m")?, defl: g("defl")?, sea: g("w_sea")?, heat: g("heat")?,
-            runoff: g("runoff_y")?, c_air: g("c_air")?, c_deep: g("c_deep")?, ice: (0..BANDS).map(|b| g(&format!("w_ice{b}"))).collect::<Result<_, _>>()? });
+            runoff: g("runoff_y")?, c_air: g("c_air")?, c_deep: g("c_deep")?, p_min: g("p_min")?, b_rockp: reg.boundary("rockp").ok_or_else(|| WorldError::Unknown("rockp".into()))?, ice: (0..BANDS).map(|b| g(&format!("w_ice{b}"))).collect::<Result<_, _>>()? });
         Ok(())
     }
     fn step(&mut self, ctx: &StepCtx, view: &View, out: &mut FlowOut) -> Result<(), WorldError> {
@@ -289,6 +291,7 @@ impl Module for Landscape {
             // out of the river
             for g in 0..3 { if p.dep[g][i] > 0.0 { out.push(tr, Endpoint::Stock(sed[g]), 0, i, p.dep[g][i] * a); } }
             if p.abyss[i] > 0.0 { out.push(tr, Endpoint::Boundary(env.ph.b_abyss), 0, i, p.abyss[i]); }
+            if p.weather[i] > 0.0 { out.push(Endpoint::Boundary(ids.b_rockp), Endpoint::Stock(ids.p_min), 0, i, p.weather[i] * ROCK_P_KG_PER_M3 * a); }
             if p.co2[i] > 0.0 {
                 let d = rt.dest_dry[i] as usize;
                 out.push(Endpoint::Stock(ids.c_air), Endpoint::Stock(ids.c_deep), i, d, p.co2[i] * a);

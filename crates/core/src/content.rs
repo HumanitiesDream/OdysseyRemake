@@ -118,7 +118,9 @@ mod tests {
         assert_eq!(c.get("plant_types").unwrap().items.len(), 10);
         assert_eq!(c.get("animal_guilds").unwrap().items.len(), 14);
         assert!(c.get("rock_types").unwrap().item("sc").is_some());
-        assert_eq!(c.unverified.len(), 4, "the four Heimsath figures are from memory: {:?}", c.unverified);
+        // the plant parameters taken from LPJmL are verified; the ones we chose ourselves are flagged
+        assert!(c.unverified.iter().all(|u| u.contains("plant_types")), "only our own plant assumptions are unverified");
+        assert!(!c.unverified.is_empty());
     }
 
     #[test]

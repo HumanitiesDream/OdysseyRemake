@@ -17,6 +17,7 @@
 
 use crate::climate::InsolTable;
 use crate::earth::BANDS;
+use crate::eco::{canopy, transpiration, Eco, PlantSet, NPT};
 use crate::env::*;
 use crate::flows::{Endpoint, FlowOut};
 use crate::grid::Grid;
@@ -55,6 +56,8 @@ pub fn waterfill(z: &[f32], d_m: f32) -> (f32, usize) {
 
 pub struct Hydro {
     env: Env,
+    set: PlantSet,
+    eco: Eco,
     ids: Option<Ids>,
     insol: Option<InsolTable>,
     rt: Option<Routing>,
@@ -66,7 +69,7 @@ struct Ids {
 }
 
 impl Hydro {
-    pub fn new(env: Env) -> Hydro { Hydro { env, ids: None, insol: None, rt: None } }
+    pub fn new(env: Env, set: PlantSet, eco: Eco) -> Hydro { Hydro { env, set, eco, ids: None, insol: None, rt: None } }
 }
 
 impl Module for Hydro {
@@ -74,6 +77,7 @@ impl Module for Hydro {
         let mut reads: Vec<String> = ["heat", "w_sea", "w_land", "w_ground", "rock", "reg", "sed_g", "sed_s", "sed_m", "defl"].iter().map(|s| s.to_string()).collect();
         let mut writes: Vec<String> = ["w_air", "w_sea", "w_land", "w_ground", "runoff_y"].iter().map(|s| s.to_string()).collect();
         for b in 0..BANDS { for k in ["w_snow", "w_ice"] { reads.push(format!("{k}{b}")); writes.push(format!("{k}{b}")); } }
+        for t in &self.set.types { reads.push(format!("c_leaf_{}", t.id)); }
         let mut s = ModuleSpec::new("hydro", Phase::Water);
         s.reads = reads; s.writes = writes;
         s.boundaries = vec!["diag".into()];
@@ -106,6 +110,8 @@ impl Module for Hydro {
         let w_ground = view.stock(ids.w_ground)?;
         let snow: Vec<&[f32]> = ids.snow.iter().map(|&s| view.stock(s)).collect::<Result<_, _>>()?;
         let ice: Vec<&[f32]> = ids.ice.iter().map(|&s| view.stock(s)).collect::<Result<_, _>>()?;
+        let leaf: Vec<&[f32]> = self.eco.leaf.iter().map(|&s| view.stock(s)).collect::<Result<_, _>>()?;
+        let set = &self.set;
         let (rock, regl, sg, ss, sm, defl) = (view.stock(ids.rock)?, view.stock(ids.reg)?, view.stock(ids.sg)?, view.stock(ids.ss)?, view.stock(ids.sm)?, view.stock(ids.defl)?);
 
         // geometry and sea cover
@@ -183,8 +189,13 @@ impl Module for Hydro {
             sum_p_land += p_tile as f64 * a;
             let pet = pet_oudin(q, t_mean - 273.15) * days;
             let w = w_land[i];
-            e_land[i] = (pet * w / (w + W_HALF) * (1.0 - 0.9 * f_ice)).min(0.3 * w);
-            sum_e += e_land[i] as f64 * a;
+            // plants transpire what their leaves ask for and the soil can give; bare ground evaporates
+            let mut lf = [0f32; NPT];
+            for p in 0..NPT { lf[p] = leaf[p][i]; }
+            let cn = canopy(set, &lf, t_mean - 273.15, (w / FIELD_CAP).min(1.0));
+            let (transp, _) = transpiration(pet, cn.fpar_tot, w);
+            let soil_evap = pet * (1.0 - cn.fpar_tot) * w / (w + W_HALF) * (1.0 - 0.9 * f_ice);
+            e_land[i] = (transp + soil_evap).min(0.7 * w);
 
             let mut rain = 0f32;
             for b in 0..BANDS {
@@ -209,6 +220,10 @@ impl Module for Hydro {
             drain_deep[i] = 0.04 * w;
             run[i] = 0.4 * (w - FIELD_CAP).max(0.0) + 0.04 * w;
             base_flow[i] = 0.08 * w_ground[i];
+            // the draws on one pool in one month must fit inside it
+            let total = e_land[i] + drain_deep[i] + run[i];
+            if total > 0.95 * w { let k = 0.95 * w / total; e_land[i] *= k; drain_deep[i] *= k; run[i] *= k; }
+            sum_e += e_land[i] as f64 * a;
         }
 
         // close the air: sea rain is what evaporation leaves after rain on land

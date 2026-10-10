@@ -239,8 +239,8 @@ mod tests {
     #[test]
     fn moment_magnitude_round_trip() {
         for mw in [5.5, 6.0, 7.0, 8.2, 9.0] { assert!((mw_of(moment_1e18(mw)) - mw).abs() < 1e-9); }
-        // Mw 7 is 3.5e19 N m: 35 in units of 1e18
-        assert!((moment_1e18(7.0) - 35.5).abs() < 1.0);
+        // Mw 7 is 3.98e19 N m: about 39.8 in units of 1e18
+        assert!((moment_1e18(7.0) - 39.8).abs() < 0.5);
     }
     #[test]
     fn vei_classes() {

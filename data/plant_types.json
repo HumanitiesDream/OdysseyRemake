@@ -1,16 +1,1326 @@
 {
-  "kind": "plant_types",
-  "version": 1,
-  "items": [
-    { "id": "tropical_evergreen", "name": "Tropical evergreen tree", "source": "REDESIGN-PLAN.md, Ecology, rebuild point 1 (after Sitch et al. 2003, LPJ)" },
-    { "id": "tropical_dry", "name": "Tropical dry-season tree", "source": "REDESIGN-PLAN.md, Ecology, rebuild point 1" },
-    { "id": "temperate_broadleaf", "name": "Temperate broadleaf tree", "source": "REDESIGN-PLAN.md, Ecology, rebuild point 1" },
-    { "id": "temperate_needle", "name": "Temperate needleleaf tree", "source": "REDESIGN-PLAN.md, Ecology, rebuild point 1" },
-    { "id": "boreal_needle", "name": "Boreal needleleaf tree", "source": "REDESIGN-PLAN.md, Ecology, rebuild point 1" },
-    { "id": "boreal_summergreen", "name": "Boreal summergreen tree", "source": "REDESIGN-PLAN.md, Ecology, rebuild point 1" },
-    { "id": "shrub", "name": "Shrub", "source": "REDESIGN-PLAN.md, Ecology, rebuild point 1" },
-    { "id": "c3_grass", "name": "C3 grass", "source": "REDESIGN-PLAN.md, Ecology, rebuild point 1" },
-    { "id": "c4_grass", "name": "C4 grass", "source": "REDESIGN-PLAN.md, Ecology, rebuild point 1" },
-    { "id": "moss_lichen", "name": "Moss and lichen", "source": "REDESIGN-PLAN.md, Ecology, rebuild point 1" }
-  ]
+ "kind": "plant_types",
+ "version": 2,
+ "items": [
+  {
+   "id": "tropical_evergreen",
+   "name": "Tropical evergreen tree",
+   "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'tropical broadleaved evergreen tree'",
+   "phenology": "evergreen",
+   "path": "C3",
+   "sla_m2_per_kgC": {
+    "value": 19.86,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'tropical broadleaved evergreen tree'",
+    "verified": true,
+    "unit": "m2/kgC"
+   },
+   "leaf_longevity_yr": {
+    "value": 1.6,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'tropical broadleaved evergreen tree'",
+    "verified": true,
+    "unit": "yr"
+   },
+   "light_extinction": {
+    "value": 0.6,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'tropical broadleaved evergreen tree'",
+    "verified": true
+   },
+   "t_photosynthesis_min_c": {
+    "value": 2.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'tropical broadleaved evergreen tree'",
+    "verified": true,
+    "unit": "C"
+   },
+   "t_photosynthesis_max_c": {
+    "value": 55.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'tropical broadleaved evergreen tree'",
+    "verified": true,
+    "unit": "C"
+   },
+   "t_optimum_low_c": {
+    "value": 25.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'tropical broadleaved evergreen tree'",
+    "verified": true,
+    "unit": "C"
+   },
+   "t_optimum_high_c": {
+    "value": 30.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'tropical broadleaved evergreen tree'",
+    "verified": true,
+    "unit": "C"
+   },
+   "coldest_month_min_c": {
+    "value": 15.5,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'tropical broadleaved evergreen tree'",
+    "verified": true,
+    "unit": "C"
+   },
+   "coldest_month_max_c": {
+    "value": 1000.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'tropical broadleaved evergreen tree'",
+    "verified": true,
+    "unit": "C"
+   },
+   "turnover_leaf_yr": {
+    "value": 2.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'tropical broadleaved evergreen tree'",
+    "verified": true,
+    "unit": "yr"
+   },
+   "turnover_sapwood_yr": {
+    "value": 30.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'tropical broadleaved evergreen tree'",
+    "verified": true,
+    "unit": "yr"
+   },
+   "turnover_root_yr": {
+    "value": 2.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'tropical broadleaved evergreen tree'",
+    "verified": true,
+    "unit": "yr"
+   },
+   "mort_max_per_yr": {
+    "value": 0.04,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'tropical broadleaved evergreen tree'",
+    "verified": true,
+    "unit": "1/yr"
+   },
+   "albedo_leaf": {
+    "value": 0.13,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'tropical broadleaved evergreen tree'",
+    "verified": true
+   },
+   "aprec_min_mm": {
+    "value": 100.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'tropical broadleaved evergreen tree'",
+    "verified": true,
+    "unit": "mm"
+   },
+   "height_m": {
+    "value": 40,
+    "source": "assumption (docs/DECISIONS.md): typical stand values, to be tuned against biomass maps",
+    "verified": false,
+    "unit": "m"
+   },
+   "lai_max": {
+    "value": 7.0,
+    "source": "assumption (docs/DECISIONS.md): typical stand values, to be tuned against biomass maps",
+    "verified": false
+   },
+   "alloc_leaf": {
+    "value": 0.3,
+    "source": "assumption (docs/DECISIONS.md): typical stand values, to be tuned against biomass maps",
+    "verified": false
+   },
+   "alloc_wood": {
+    "value": 0.45,
+    "source": "assumption (docs/DECISIONS.md): typical stand values, to be tuned against biomass maps",
+    "verified": false
+   },
+   "alloc_root": {
+    "value": 0.25,
+    "source": "assumption (docs/DECISIONS.md): typical stand values, to be tuned against biomass maps",
+    "verified": false
+   },
+   "seed_diffusion_m2_per_yr": {
+    "value": 20000.0,
+    "source": "assumption: sets a front speed of 100 to 400 m a year with a growth rate near 0.3 per year (Fisher-KPP)",
+    "verified": false,
+    "unit": "m2/yr"
+   },
+   "flammability": {
+    "value": 0.15,
+    "source": "assumption (docs/DECISIONS.md): typical stand values, to be tuned against biomass maps",
+    "verified": false
+   }
+  },
+  {
+   "id": "tropical_dry",
+   "name": "Tropical rain-green tree",
+   "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'tropical broadleaved raingreen tree'",
+   "phenology": "raingreen",
+   "path": "C3",
+   "sla_m2_per_kgC": {
+    "value": 32.33,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'tropical broadleaved raingreen tree'",
+    "verified": true,
+    "unit": "m2/kgC"
+   },
+   "leaf_longevity_yr": {
+    "value": 0.5,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'tropical broadleaved raingreen tree'",
+    "verified": true,
+    "unit": "yr"
+   },
+   "light_extinction": {
+    "value": 0.6,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'tropical broadleaved raingreen tree'",
+    "verified": true
+   },
+   "t_photosynthesis_min_c": {
+    "value": 2.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'tropical broadleaved raingreen tree'",
+    "verified": true,
+    "unit": "C"
+   },
+   "t_photosynthesis_max_c": {
+    "value": 55.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'tropical broadleaved raingreen tree'",
+    "verified": true,
+    "unit": "C"
+   },
+   "t_optimum_low_c": {
+    "value": 25.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'tropical broadleaved raingreen tree'",
+    "verified": true,
+    "unit": "C"
+   },
+   "t_optimum_high_c": {
+    "value": 30.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'tropical broadleaved raingreen tree'",
+    "verified": true,
+    "unit": "C"
+   },
+   "coldest_month_min_c": {
+    "value": 15.5,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'tropical broadleaved raingreen tree'",
+    "verified": true,
+    "unit": "C"
+   },
+   "coldest_month_max_c": {
+    "value": 1000.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'tropical broadleaved raingreen tree'",
+    "verified": true,
+    "unit": "C"
+   },
+   "turnover_leaf_yr": {
+    "value": 1.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'tropical broadleaved raingreen tree'",
+    "verified": true,
+    "unit": "yr"
+   },
+   "turnover_sapwood_yr": {
+    "value": 30.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'tropical broadleaved raingreen tree'",
+    "verified": true,
+    "unit": "yr"
+   },
+   "turnover_root_yr": {
+    "value": 1.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'tropical broadleaved raingreen tree'",
+    "verified": true,
+    "unit": "yr"
+   },
+   "mort_max_per_yr": {
+    "value": 0.04,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'tropical broadleaved raingreen tree'",
+    "verified": true,
+    "unit": "1/yr"
+   },
+   "albedo_leaf": {
+    "value": 0.14,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'tropical broadleaved raingreen tree'",
+    "verified": true
+   },
+   "aprec_min_mm": {
+    "value": 100.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'tropical broadleaved raingreen tree'",
+    "verified": true,
+    "unit": "mm"
+   },
+   "height_m": {
+    "value": 30,
+    "source": "assumption (docs/DECISIONS.md): typical stand values, to be tuned against biomass maps",
+    "verified": false,
+    "unit": "m"
+   },
+   "lai_max": {
+    "value": 5.0,
+    "source": "assumption (docs/DECISIONS.md): typical stand values, to be tuned against biomass maps",
+    "verified": false
+   },
+   "alloc_leaf": {
+    "value": 0.3,
+    "source": "assumption (docs/DECISIONS.md): typical stand values, to be tuned against biomass maps",
+    "verified": false
+   },
+   "alloc_wood": {
+    "value": 0.4,
+    "source": "assumption (docs/DECISIONS.md): typical stand values, to be tuned against biomass maps",
+    "verified": false
+   },
+   "alloc_root": {
+    "value": 0.3,
+    "source": "assumption (docs/DECISIONS.md): typical stand values, to be tuned against biomass maps",
+    "verified": false
+   },
+   "seed_diffusion_m2_per_yr": {
+    "value": 20000.0,
+    "source": "assumption: sets a front speed of 100 to 400 m a year with a growth rate near 0.3 per year (Fisher-KPP)",
+    "verified": false,
+    "unit": "m2/yr"
+   },
+   "flammability": {
+    "value": 0.3,
+    "source": "assumption (docs/DECISIONS.md): typical stand values, to be tuned against biomass maps",
+    "verified": false
+   }
+  },
+  {
+   "id": "temperate_broadleaf",
+   "name": "Temperate broadleaf summergreen tree",
+   "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'temperate broadleaved summergreen tree'",
+   "phenology": "summergreen",
+   "path": "C3",
+   "sla_m2_per_kgC": {
+    "value": 32.33,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'temperate broadleaved summergreen tree'",
+    "verified": true,
+    "unit": "m2/kgC"
+   },
+   "leaf_longevity_yr": {
+    "value": 0.45,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'temperate broadleaved summergreen tree'",
+    "verified": true,
+    "unit": "yr"
+   },
+   "light_extinction": {
+    "value": 0.6,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'temperate broadleaved summergreen tree'",
+    "verified": true
+   },
+   "t_photosynthesis_min_c": {
+    "value": -4.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'temperate broadleaved summergreen tree'",
+    "verified": true,
+    "unit": "C"
+   },
+   "t_photosynthesis_max_c": {
+    "value": 38.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'temperate broadleaved summergreen tree'",
+    "verified": true,
+    "unit": "C"
+   },
+   "t_optimum_low_c": {
+    "value": 20.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'temperate broadleaved summergreen tree'",
+    "verified": true,
+    "unit": "C"
+   },
+   "t_optimum_high_c": {
+    "value": 30.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'temperate broadleaved summergreen tree'",
+    "verified": true,
+    "unit": "C"
+   },
+   "coldest_month_min_c": {
+    "value": -17.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'temperate broadleaved summergreen tree'",
+    "verified": true,
+    "unit": "C"
+   },
+   "coldest_month_max_c": {
+    "value": 20.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'temperate broadleaved summergreen tree'",
+    "verified": true,
+    "unit": "C"
+   },
+   "turnover_leaf_yr": {
+    "value": 1.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'temperate broadleaved summergreen tree'",
+    "verified": true,
+    "unit": "yr"
+   },
+   "turnover_sapwood_yr": {
+    "value": 25.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'temperate broadleaved summergreen tree'",
+    "verified": true,
+    "unit": "yr"
+   },
+   "turnover_root_yr": {
+    "value": 1.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'temperate broadleaved summergreen tree'",
+    "verified": true,
+    "unit": "yr"
+   },
+   "mort_max_per_yr": {
+    "value": 0.04,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'temperate broadleaved summergreen tree'",
+    "verified": true,
+    "unit": "1/yr"
+   },
+   "albedo_leaf": {
+    "value": 0.15,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'temperate broadleaved summergreen tree'",
+    "verified": true
+   },
+   "aprec_min_mm": {
+    "value": 100.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'temperate broadleaved summergreen tree'",
+    "verified": true,
+    "unit": "mm"
+   },
+   "height_m": {
+    "value": 30,
+    "source": "assumption (docs/DECISIONS.md): typical stand values, to be tuned against biomass maps",
+    "verified": false,
+    "unit": "m"
+   },
+   "lai_max": {
+    "value": 6.0,
+    "source": "assumption (docs/DECISIONS.md): typical stand values, to be tuned against biomass maps",
+    "verified": false
+   },
+   "alloc_leaf": {
+    "value": 0.3,
+    "source": "assumption (docs/DECISIONS.md): typical stand values, to be tuned against biomass maps",
+    "verified": false
+   },
+   "alloc_wood": {
+    "value": 0.4,
+    "source": "assumption (docs/DECISIONS.md): typical stand values, to be tuned against biomass maps",
+    "verified": false
+   },
+   "alloc_root": {
+    "value": 0.3,
+    "source": "assumption (docs/DECISIONS.md): typical stand values, to be tuned against biomass maps",
+    "verified": false
+   },
+   "seed_diffusion_m2_per_yr": {
+    "value": 15000.0,
+    "source": "assumption: sets a front speed of 100 to 400 m a year with a growth rate near 0.3 per year (Fisher-KPP)",
+    "verified": false,
+    "unit": "m2/yr"
+   },
+   "flammability": {
+    "value": 0.25,
+    "source": "assumption (docs/DECISIONS.md): typical stand values, to be tuned against biomass maps",
+    "verified": false
+   }
+  },
+  {
+   "id": "temperate_needle",
+   "name": "Temperate needleleaf evergreen tree",
+   "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'temperate needleleaved evergreen tree'",
+   "phenology": "evergreen",
+   "path": "C3",
+   "sla_m2_per_kgC": {
+    "value": 10.49,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'temperate needleleaved evergreen tree'",
+    "verified": true,
+    "unit": "m2/kgC"
+   },
+   "leaf_longevity_yr": {
+    "value": 4.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'temperate needleleaved evergreen tree'",
+    "verified": true,
+    "unit": "yr"
+   },
+   "light_extinction": {
+    "value": 0.5,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'temperate needleleaved evergreen tree'",
+    "verified": true
+   },
+   "t_photosynthesis_min_c": {
+    "value": -4.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'temperate needleleaved evergreen tree'",
+    "verified": true,
+    "unit": "C"
+   },
+   "t_photosynthesis_max_c": {
+    "value": 42.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'temperate needleleaved evergreen tree'",
+    "verified": true,
+    "unit": "C"
+   },
+   "t_optimum_low_c": {
+    "value": 20.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'temperate needleleaved evergreen tree'",
+    "verified": true,
+    "unit": "C"
+   },
+   "t_optimum_high_c": {
+    "value": 30.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'temperate needleleaved evergreen tree'",
+    "verified": true,
+    "unit": "C"
+   },
+   "coldest_month_min_c": {
+    "value": -5.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'temperate needleleaved evergreen tree'",
+    "verified": true,
+    "unit": "C"
+   },
+   "coldest_month_max_c": {
+    "value": 20.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'temperate needleleaved evergreen tree'",
+    "verified": true,
+    "unit": "C"
+   },
+   "turnover_leaf_yr": {
+    "value": 2.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'temperate needleleaved evergreen tree'",
+    "verified": true,
+    "unit": "yr"
+   },
+   "turnover_sapwood_yr": {
+    "value": 25.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'temperate needleleaved evergreen tree'",
+    "verified": true,
+    "unit": "yr"
+   },
+   "turnover_root_yr": {
+    "value": 2.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'temperate needleleaved evergreen tree'",
+    "verified": true,
+    "unit": "yr"
+   },
+   "mort_max_per_yr": {
+    "value": 0.04,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'temperate needleleaved evergreen tree'",
+    "verified": true,
+    "unit": "1/yr"
+   },
+   "albedo_leaf": {
+    "value": 0.18,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'temperate needleleaved evergreen tree'",
+    "verified": true
+   },
+   "aprec_min_mm": {
+    "value": 100.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'temperate needleleaved evergreen tree'",
+    "verified": true,
+    "unit": "mm"
+   },
+   "height_m": {
+    "value": 30,
+    "source": "assumption (docs/DECISIONS.md): typical stand values, to be tuned against biomass maps",
+    "verified": false,
+    "unit": "m"
+   },
+   "lai_max": {
+    "value": 6.0,
+    "source": "assumption (docs/DECISIONS.md): typical stand values, to be tuned against biomass maps",
+    "verified": false
+   },
+   "alloc_leaf": {
+    "value": 0.25,
+    "source": "assumption (docs/DECISIONS.md): typical stand values, to be tuned against biomass maps",
+    "verified": false
+   },
+   "alloc_wood": {
+    "value": 0.45,
+    "source": "assumption (docs/DECISIONS.md): typical stand values, to be tuned against biomass maps",
+    "verified": false
+   },
+   "alloc_root": {
+    "value": 0.3,
+    "source": "assumption (docs/DECISIONS.md): typical stand values, to be tuned against biomass maps",
+    "verified": false
+   },
+   "seed_diffusion_m2_per_yr": {
+    "value": 15000.0,
+    "source": "assumption: sets a front speed of 100 to 400 m a year with a growth rate near 0.3 per year (Fisher-KPP)",
+    "verified": false,
+    "unit": "m2/yr"
+   },
+   "flammability": {
+    "value": 0.45,
+    "source": "assumption (docs/DECISIONS.md): typical stand values, to be tuned against biomass maps",
+    "verified": false
+   }
+  },
+  {
+   "id": "boreal_needle",
+   "name": "Boreal needleleaf evergreen tree",
+   "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'boreal needleleaved evergreen tree'",
+   "phenology": "evergreen",
+   "path": "C3",
+   "sla_m2_per_kgC": {
+    "value": 10.49,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'boreal needleleaved evergreen tree'",
+    "verified": true,
+    "unit": "m2/kgC"
+   },
+   "leaf_longevity_yr": {
+    "value": 4.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'boreal needleleaved evergreen tree'",
+    "verified": true,
+    "unit": "yr"
+   },
+   "light_extinction": {
+    "value": 0.5,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'boreal needleleaved evergreen tree'",
+    "verified": true
+   },
+   "t_photosynthesis_min_c": {
+    "value": -4.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'boreal needleleaved evergreen tree'",
+    "verified": true,
+    "unit": "C"
+   },
+   "t_photosynthesis_max_c": {
+    "value": 38.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'boreal needleleaved evergreen tree'",
+    "verified": true,
+    "unit": "C"
+   },
+   "t_optimum_low_c": {
+    "value": 15.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'boreal needleleaved evergreen tree'",
+    "verified": true,
+    "unit": "C"
+   },
+   "t_optimum_high_c": {
+    "value": 25.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'boreal needleleaved evergreen tree'",
+    "verified": true,
+    "unit": "C"
+   },
+   "coldest_month_min_c": {
+    "value": -32.5,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'boreal needleleaved evergreen tree'",
+    "verified": true,
+    "unit": "C"
+   },
+   "coldest_month_max_c": {
+    "value": -5.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'boreal needleleaved evergreen tree'",
+    "verified": true,
+    "unit": "C"
+   },
+   "turnover_leaf_yr": {
+    "value": 3.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'boreal needleleaved evergreen tree'",
+    "verified": true,
+    "unit": "yr"
+   },
+   "turnover_sapwood_yr": {
+    "value": 25.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'boreal needleleaved evergreen tree'",
+    "verified": true,
+    "unit": "yr"
+   },
+   "turnover_root_yr": {
+    "value": 3.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'boreal needleleaved evergreen tree'",
+    "verified": true,
+    "unit": "yr"
+   },
+   "mort_max_per_yr": {
+    "value": 0.04,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'boreal needleleaved evergreen tree'",
+    "verified": true,
+    "unit": "1/yr"
+   },
+   "albedo_leaf": {
+    "value": 0.18,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'boreal needleleaved evergreen tree'",
+    "verified": true
+   },
+   "aprec_min_mm": {
+    "value": 100.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'boreal needleleaved evergreen tree'",
+    "verified": true,
+    "unit": "mm"
+   },
+   "height_m": {
+    "value": 22,
+    "source": "assumption (docs/DECISIONS.md): typical stand values, to be tuned against biomass maps",
+    "verified": false,
+    "unit": "m"
+   },
+   "lai_max": {
+    "value": 5.0,
+    "source": "assumption (docs/DECISIONS.md): typical stand values, to be tuned against biomass maps",
+    "verified": false
+   },
+   "alloc_leaf": {
+    "value": 0.25,
+    "source": "assumption (docs/DECISIONS.md): typical stand values, to be tuned against biomass maps",
+    "verified": false
+   },
+   "alloc_wood": {
+    "value": 0.4,
+    "source": "assumption (docs/DECISIONS.md): typical stand values, to be tuned against biomass maps",
+    "verified": false
+   },
+   "alloc_root": {
+    "value": 0.35,
+    "source": "assumption (docs/DECISIONS.md): typical stand values, to be tuned against biomass maps",
+    "verified": false
+   },
+   "seed_diffusion_m2_per_yr": {
+    "value": 10000.0,
+    "source": "assumption: sets a front speed of 100 to 400 m a year with a growth rate near 0.3 per year (Fisher-KPP)",
+    "verified": false,
+    "unit": "m2/yr"
+   },
+   "flammability": {
+    "value": 0.5,
+    "source": "assumption (docs/DECISIONS.md): typical stand values, to be tuned against biomass maps",
+    "verified": false
+   }
+  },
+  {
+   "id": "boreal_summergreen",
+   "name": "Boreal broadleaf summergreen tree",
+   "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'boreal broadleaved summergreen tree'",
+   "phenology": "summergreen",
+   "path": "C3",
+   "sla_m2_per_kgC": {
+    "value": 32.33,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'boreal broadleaved summergreen tree'",
+    "verified": true,
+    "unit": "m2/kgC"
+   },
+   "leaf_longevity_yr": {
+    "value": 0.5,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'boreal broadleaved summergreen tree'",
+    "verified": true,
+    "unit": "yr"
+   },
+   "light_extinction": {
+    "value": 0.5,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'boreal broadleaved summergreen tree'",
+    "verified": true
+   },
+   "t_photosynthesis_min_c": {
+    "value": -4.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'boreal broadleaved summergreen tree'",
+    "verified": true,
+    "unit": "C"
+   },
+   "t_photosynthesis_max_c": {
+    "value": 38.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'boreal broadleaved summergreen tree'",
+    "verified": true,
+    "unit": "C"
+   },
+   "t_optimum_low_c": {
+    "value": 15.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'boreal broadleaved summergreen tree'",
+    "verified": true,
+    "unit": "C"
+   },
+   "t_optimum_high_c": {
+    "value": 25.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'boreal broadleaved summergreen tree'",
+    "verified": true,
+    "unit": "C"
+   },
+   "coldest_month_min_c": {
+    "value": -32.5,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'boreal broadleaved summergreen tree'",
+    "verified": true,
+    "unit": "C"
+   },
+   "coldest_month_max_c": {
+    "value": -5.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'boreal broadleaved summergreen tree'",
+    "verified": true,
+    "unit": "C"
+   },
+   "turnover_leaf_yr": {
+    "value": 1.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'boreal broadleaved summergreen tree'",
+    "verified": true,
+    "unit": "yr"
+   },
+   "turnover_sapwood_yr": {
+    "value": 25.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'boreal broadleaved summergreen tree'",
+    "verified": true,
+    "unit": "yr"
+   },
+   "turnover_root_yr": {
+    "value": 1.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'boreal broadleaved summergreen tree'",
+    "verified": true,
+    "unit": "yr"
+   },
+   "mort_max_per_yr": {
+    "value": 0.04,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'boreal broadleaved summergreen tree'",
+    "verified": true,
+    "unit": "1/yr"
+   },
+   "albedo_leaf": {
+    "value": 0.18,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'boreal broadleaved summergreen tree'",
+    "verified": true
+   },
+   "aprec_min_mm": {
+    "value": 100.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'boreal broadleaved summergreen tree'",
+    "verified": true,
+    "unit": "mm"
+   },
+   "height_m": {
+    "value": 20,
+    "source": "assumption (docs/DECISIONS.md): typical stand values, to be tuned against biomass maps",
+    "verified": false,
+    "unit": "m"
+   },
+   "lai_max": {
+    "value": 4.0,
+    "source": "assumption (docs/DECISIONS.md): typical stand values, to be tuned against biomass maps",
+    "verified": false
+   },
+   "alloc_leaf": {
+    "value": 0.3,
+    "source": "assumption (docs/DECISIONS.md): typical stand values, to be tuned against biomass maps",
+    "verified": false
+   },
+   "alloc_wood": {
+    "value": 0.35,
+    "source": "assumption (docs/DECISIONS.md): typical stand values, to be tuned against biomass maps",
+    "verified": false
+   },
+   "alloc_root": {
+    "value": 0.35,
+    "source": "assumption (docs/DECISIONS.md): typical stand values, to be tuned against biomass maps",
+    "verified": false
+   },
+   "seed_diffusion_m2_per_yr": {
+    "value": 15000.0,
+    "source": "assumption: sets a front speed of 100 to 400 m a year with a growth rate near 0.3 per year (Fisher-KPP)",
+    "verified": false,
+    "unit": "m2/yr"
+   },
+   "flammability": {
+    "value": 0.3,
+    "source": "assumption (docs/DECISIONS.md): typical stand values, to be tuned against biomass maps",
+    "verified": false
+   }
+  },
+  {
+   "id": "shrub",
+   "name": "Shrub",
+   "source": "Derived from LPJmL boreal broadleaf summergreen with the changes listed under 'mine'; LPJmL has no shrub PFT",
+   "phenology": "summergreen",
+   "path": "C3",
+   "sla_m2_per_kgC": {
+    "value": 32.33,
+    "source": "Derived from LPJmL boreal broadleaf summergreen with the changes listed under 'mine'; LPJmL has no shrub PFT",
+    "verified": false,
+    "unit": "m2/kgC"
+   },
+   "leaf_longevity_yr": {
+    "value": 0.5,
+    "source": "Derived from LPJmL boreal broadleaf summergreen with the changes listed under 'mine'; LPJmL has no shrub PFT",
+    "verified": false,
+    "unit": "yr"
+   },
+   "light_extinction": {
+    "value": 0.5,
+    "source": "Derived from LPJmL boreal broadleaf summergreen with the changes listed under 'mine'; LPJmL has no shrub PFT",
+    "verified": false
+   },
+   "t_photosynthesis_min_c": {
+    "value": -4.0,
+    "source": "Derived from LPJmL boreal broadleaf summergreen with the changes listed under 'mine'; LPJmL has no shrub PFT",
+    "verified": false,
+    "unit": "C"
+   },
+   "t_photosynthesis_max_c": {
+    "value": 38.0,
+    "source": "Derived from LPJmL boreal broadleaf summergreen with the changes listed under 'mine'; LPJmL has no shrub PFT",
+    "verified": false,
+    "unit": "C"
+   },
+   "t_optimum_low_c": {
+    "value": 15.0,
+    "source": "Derived from LPJmL boreal broadleaf summergreen with the changes listed under 'mine'; LPJmL has no shrub PFT",
+    "verified": false,
+    "unit": "C"
+   },
+   "t_optimum_high_c": {
+    "value": 25.0,
+    "source": "Derived from LPJmL boreal broadleaf summergreen with the changes listed under 'mine'; LPJmL has no shrub PFT",
+    "verified": false,
+    "unit": "C"
+   },
+   "coldest_month_min_c": {
+    "value": -32.5,
+    "source": "Derived from LPJmL boreal broadleaf summergreen with the changes listed under 'mine'; LPJmL has no shrub PFT",
+    "verified": false,
+    "unit": "C"
+   },
+   "coldest_month_max_c": {
+    "value": -5.0,
+    "source": "Derived from LPJmL boreal broadleaf summergreen with the changes listed under 'mine'; LPJmL has no shrub PFT",
+    "verified": false,
+    "unit": "C"
+   },
+   "turnover_leaf_yr": {
+    "value": 1.0,
+    "source": "Derived from LPJmL boreal broadleaf summergreen with the changes listed under 'mine'; LPJmL has no shrub PFT",
+    "verified": false,
+    "unit": "yr"
+   },
+   "turnover_sapwood_yr": {
+    "value": 15.0,
+    "source": "assumption: shrub wood turns over faster than tree sapwood",
+    "verified": false,
+    "unit": "yr"
+   },
+   "turnover_root_yr": {
+    "value": 1.0,
+    "source": "Derived from LPJmL boreal broadleaf summergreen with the changes listed under 'mine'; LPJmL has no shrub PFT",
+    "verified": false,
+    "unit": "yr"
+   },
+   "mort_max_per_yr": {
+    "value": 0.04,
+    "source": "Derived from LPJmL boreal broadleaf summergreen with the changes listed under 'mine'; LPJmL has no shrub PFT",
+    "verified": false,
+    "unit": "1/yr"
+   },
+   "albedo_leaf": {
+    "value": 0.18,
+    "source": "Derived from LPJmL boreal broadleaf summergreen with the changes listed under 'mine'; LPJmL has no shrub PFT",
+    "verified": false
+   },
+   "aprec_min_mm": {
+    "value": 100.0,
+    "source": "Derived from LPJmL boreal broadleaf summergreen with the changes listed under 'mine'; LPJmL has no shrub PFT",
+    "verified": false,
+    "unit": "mm"
+   },
+   "height_m": {
+    "value": 3,
+    "source": "assumption (docs/DECISIONS.md): typical stand values, to be tuned against biomass maps",
+    "verified": false,
+    "unit": "m"
+   },
+   "lai_max": {
+    "value": 3.0,
+    "source": "assumption (docs/DECISIONS.md): typical stand values, to be tuned against biomass maps",
+    "verified": false
+   },
+   "alloc_leaf": {
+    "value": 0.3,
+    "source": "assumption (docs/DECISIONS.md): typical stand values, to be tuned against biomass maps",
+    "verified": false
+   },
+   "alloc_wood": {
+    "value": 0.3,
+    "source": "assumption (docs/DECISIONS.md): typical stand values, to be tuned against biomass maps",
+    "verified": false
+   },
+   "alloc_root": {
+    "value": 0.4,
+    "source": "assumption (docs/DECISIONS.md): typical stand values, to be tuned against biomass maps",
+    "verified": false
+   },
+   "seed_diffusion_m2_per_yr": {
+    "value": 25000.0,
+    "source": "assumption: sets a front speed of 100 to 400 m a year with a growth rate near 0.3 per year (Fisher-KPP)",
+    "verified": false,
+    "unit": "m2/yr"
+   },
+   "flammability": {
+    "value": 0.5,
+    "source": "assumption (docs/DECISIONS.md): typical stand values, to be tuned against biomass maps",
+    "verified": false
+   }
+  },
+  {
+   "id": "c3_grass",
+   "name": "C3 grass",
+   "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'Temperate C3 grass'",
+   "phenology": "any",
+   "path": "C3",
+   "sla_m2_per_kgC": {
+    "value": 42.242,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'Temperate C3 grass'",
+    "verified": true,
+    "unit": "m2/kgC"
+   },
+   "leaf_longevity_yr": {
+    "value": 0.35,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'Temperate C3 grass'",
+    "verified": true,
+    "unit": "yr"
+   },
+   "light_extinction": {
+    "value": 0.5,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'Temperate C3 grass'",
+    "verified": true
+   },
+   "t_photosynthesis_min_c": {
+    "value": -4.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'Temperate C3 grass'",
+    "verified": true,
+    "unit": "C"
+   },
+   "t_photosynthesis_max_c": {
+    "value": 38.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'Temperate C3 grass'",
+    "verified": true,
+    "unit": "C"
+   },
+   "t_optimum_low_c": {
+    "value": 10.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'Temperate C3 grass'",
+    "verified": true,
+    "unit": "C"
+   },
+   "t_optimum_high_c": {
+    "value": 30.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'Temperate C3 grass'",
+    "verified": true,
+    "unit": "C"
+   },
+   "coldest_month_min_c": {
+    "value": -30.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'Temperate C3 grass'",
+    "verified": true,
+    "unit": "C"
+   },
+   "coldest_month_max_c": {
+    "value": 15.5,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'Temperate C3 grass'",
+    "verified": true,
+    "unit": "C"
+   },
+   "turnover_leaf_yr": {
+    "value": 1.2,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'Temperate C3 grass'",
+    "verified": true,
+    "unit": "yr"
+   },
+   "turnover_sapwood_yr": {
+    "value": 0.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'Temperate C3 grass'",
+    "verified": true,
+    "unit": "yr"
+   },
+   "turnover_root_yr": {
+    "value": 2.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'Temperate C3 grass'",
+    "verified": true,
+    "unit": "yr"
+   },
+   "mort_max_per_yr": {
+    "value": 0.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'Temperate C3 grass'",
+    "verified": true,
+    "unit": "1/yr"
+   },
+   "albedo_leaf": {
+    "value": 0.23,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'Temperate C3 grass'",
+    "verified": true
+   },
+   "aprec_min_mm": {
+    "value": 100.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'Temperate C3 grass'",
+    "verified": true,
+    "unit": "mm"
+   },
+   "height_m": {
+    "value": 1,
+    "source": "assumption (docs/DECISIONS.md): typical stand values, to be tuned against biomass maps",
+    "verified": false,
+    "unit": "m"
+   },
+   "lai_max": {
+    "value": 4.0,
+    "source": "assumption (docs/DECISIONS.md): typical stand values, to be tuned against biomass maps",
+    "verified": false
+   },
+   "alloc_leaf": {
+    "value": 0.5,
+    "source": "assumption (docs/DECISIONS.md): typical stand values, to be tuned against biomass maps",
+    "verified": false
+   },
+   "alloc_wood": {
+    "value": 0.0,
+    "source": "assumption (docs/DECISIONS.md): typical stand values, to be tuned against biomass maps",
+    "verified": false
+   },
+   "alloc_root": {
+    "value": 0.5,
+    "source": "assumption (docs/DECISIONS.md): typical stand values, to be tuned against biomass maps",
+    "verified": false
+   },
+   "seed_diffusion_m2_per_yr": {
+    "value": 60000.0,
+    "source": "assumption: sets a front speed of 100 to 400 m a year with a growth rate near 0.3 per year (Fisher-KPP)",
+    "verified": false,
+    "unit": "m2/yr"
+   },
+   "flammability": {
+    "value": 0.7,
+    "source": "assumption (docs/DECISIONS.md): typical stand values, to be tuned against biomass maps",
+    "verified": false
+   }
+  },
+  {
+   "id": "c4_grass",
+   "name": "C4 grass",
+   "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'Tropical C4 grass'",
+   "phenology": "any",
+   "path": "C4",
+   "sla_m2_per_kgC": {
+    "value": 40.373,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'Tropical C4 grass'",
+    "verified": true,
+    "unit": "m2/kgC"
+   },
+   "leaf_longevity_yr": {
+    "value": 0.4,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'Tropical C4 grass'",
+    "verified": true,
+    "unit": "yr"
+   },
+   "light_extinction": {
+    "value": 0.5,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'Tropical C4 grass'",
+    "verified": true
+   },
+   "t_photosynthesis_min_c": {
+    "value": 6.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'Tropical C4 grass'",
+    "verified": true,
+    "unit": "C"
+   },
+   "t_photosynthesis_max_c": {
+    "value": 55.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'Tropical C4 grass'",
+    "verified": true,
+    "unit": "C"
+   },
+   "t_optimum_low_c": {
+    "value": 20.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'Tropical C4 grass'",
+    "verified": true,
+    "unit": "C"
+   },
+   "t_optimum_high_c": {
+    "value": 45.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'Tropical C4 grass'",
+    "verified": true,
+    "unit": "C"
+   },
+   "coldest_month_min_c": {
+    "value": 7.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'Tropical C4 grass'",
+    "verified": true,
+    "unit": "C"
+   },
+   "coldest_month_max_c": {
+    "value": 1000.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'Tropical C4 grass'",
+    "verified": true,
+    "unit": "C"
+   },
+   "turnover_leaf_yr": {
+    "value": 1.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'Tropical C4 grass'",
+    "verified": true,
+    "unit": "yr"
+   },
+   "turnover_sapwood_yr": {
+    "value": 0.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'Tropical C4 grass'",
+    "verified": true,
+    "unit": "yr"
+   },
+   "turnover_root_yr": {
+    "value": 2.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'Tropical C4 grass'",
+    "verified": true,
+    "unit": "yr"
+   },
+   "mort_max_per_yr": {
+    "value": 0.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'Tropical C4 grass'",
+    "verified": true,
+    "unit": "1/yr"
+   },
+   "albedo_leaf": {
+    "value": 0.21,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'Tropical C4 grass'",
+    "verified": true
+   },
+   "aprec_min_mm": {
+    "value": 100.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'Tropical C4 grass'",
+    "verified": true,
+    "unit": "mm"
+   },
+   "height_m": {
+    "value": 1.2,
+    "source": "assumption (docs/DECISIONS.md): typical stand values, to be tuned against biomass maps",
+    "verified": false,
+    "unit": "m"
+   },
+   "lai_max": {
+    "value": 5.0,
+    "source": "assumption (docs/DECISIONS.md): typical stand values, to be tuned against biomass maps",
+    "verified": false
+   },
+   "alloc_leaf": {
+    "value": 0.5,
+    "source": "assumption (docs/DECISIONS.md): typical stand values, to be tuned against biomass maps",
+    "verified": false
+   },
+   "alloc_wood": {
+    "value": 0.0,
+    "source": "assumption (docs/DECISIONS.md): typical stand values, to be tuned against biomass maps",
+    "verified": false
+   },
+   "alloc_root": {
+    "value": 0.5,
+    "source": "assumption (docs/DECISIONS.md): typical stand values, to be tuned against biomass maps",
+    "verified": false
+   },
+   "seed_diffusion_m2_per_yr": {
+    "value": 60000.0,
+    "source": "assumption: sets a front speed of 100 to 400 m a year with a growth rate near 0.3 per year (Fisher-KPP)",
+    "verified": false,
+    "unit": "m2/yr"
+   },
+   "flammability": {
+    "value": 0.8,
+    "source": "assumption (docs/DECISIONS.md): typical stand values, to be tuned against biomass maps",
+    "verified": false
+   }
+  },
+  {
+   "id": "moss_lichen",
+   "name": "Moss and lichen",
+   "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'Sphagnum moss'",
+   "phenology": "any",
+   "path": "C3",
+   "sla_m2_per_kgC": {
+    "value": 40.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'Sphagnum moss'",
+    "verified": true,
+    "unit": "m2/kgC"
+   },
+   "leaf_longevity_yr": {
+    "value": 0.2,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'Sphagnum moss'",
+    "verified": true,
+    "unit": "yr"
+   },
+   "light_extinction": {
+    "value": 0.4,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'Sphagnum moss'",
+    "verified": true
+   },
+   "t_photosynthesis_min_c": {
+    "value": -4.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'Sphagnum moss'",
+    "verified": true,
+    "unit": "C"
+   },
+   "t_photosynthesis_max_c": {
+    "value": 38.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'Sphagnum moss'",
+    "verified": true,
+    "unit": "C"
+   },
+   "t_optimum_low_c": {
+    "value": 0.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'Sphagnum moss'",
+    "verified": true,
+    "unit": "C"
+   },
+   "t_optimum_high_c": {
+    "value": 25.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'Sphagnum moss'",
+    "verified": true,
+    "unit": "C"
+   },
+   "coldest_month_min_c": {
+    "value": -1000.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'Sphagnum moss'",
+    "verified": true,
+    "unit": "C"
+   },
+   "coldest_month_max_c": {
+    "value": 15.5,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'Sphagnum moss'",
+    "verified": true,
+    "unit": "C"
+   },
+   "turnover_leaf_yr": {
+    "value": 1.2,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'Sphagnum moss'",
+    "verified": true,
+    "unit": "yr"
+   },
+   "turnover_sapwood_yr": {
+    "value": 0.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'Sphagnum moss'",
+    "verified": true,
+    "unit": "yr"
+   },
+   "turnover_root_yr": {
+    "value": 1.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'Sphagnum moss'",
+    "verified": true,
+    "unit": "yr"
+   },
+   "mort_max_per_yr": {
+    "value": 0.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'Sphagnum moss'",
+    "verified": true,
+    "unit": "1/yr"
+   },
+   "albedo_leaf": {
+    "value": 0.23,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'Sphagnum moss'",
+    "verified": true
+   },
+   "aprec_min_mm": {
+    "value": 100.0,
+    "source": "LPJmL 6.1.9 par/pft.cjson (PIK, github.com/PIK-LPJmL/LPJmL), PFT 'Sphagnum moss'",
+    "verified": true,
+    "unit": "mm"
+   },
+   "height_m": {
+    "value": 0.1,
+    "source": "assumption (docs/DECISIONS.md): typical stand values, to be tuned against biomass maps",
+    "verified": false,
+    "unit": "m"
+   },
+   "lai_max": {
+    "value": 3.0,
+    "source": "assumption (docs/DECISIONS.md): typical stand values, to be tuned against biomass maps",
+    "verified": false
+   },
+   "alloc_leaf": {
+    "value": 0.9,
+    "source": "assumption (docs/DECISIONS.md): typical stand values, to be tuned against biomass maps",
+    "verified": false
+   },
+   "alloc_wood": {
+    "value": 0.0,
+    "source": "assumption (docs/DECISIONS.md): typical stand values, to be tuned against biomass maps",
+    "verified": false
+   },
+   "alloc_root": {
+    "value": 0.1,
+    "source": "assumption (docs/DECISIONS.md): typical stand values, to be tuned against biomass maps",
+    "verified": false
+   },
+   "seed_diffusion_m2_per_yr": {
+    "value": 100000.0,
+    "source": "assumption: sets a front speed of 100 to 400 m a year with a growth rate near 0.3 per year (Fisher-KPP)",
+    "verified": false,
+    "unit": "m2/yr"
+   },
+   "flammability": {
+    "value": 0.2,
+    "source": "assumption (docs/DECISIONS.md): typical stand values, to be tuned against biomass maps",
+    "verified": false
+   }
+  }
+ ]
 }

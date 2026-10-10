@@ -1,16 +1,36 @@
 {
-  "kind": "soil_production",
-  "version": 1,
-  "note": "Soil production function: rate = P0 * exp(-k * soil_depth). Warmth, water and rock type set P0 per tile.",
-  "items": [
-    {
-      "id": "heimsath_1997",
-      "name": "Heimsath et al. field range",
-      "source": "REDESIGN-PLAN.md, Geology, Rock to soil, point 1 (Heimsath et al. 1997, Nature 388:358)",
-      "p0_min_mm_per_yr": { "value": 0.05, "unit": "mm/yr", "source": "Heimsath et al. 1997 via REDESIGN-PLAN.md", "verified": false },
-      "p0_max_mm_per_yr": { "value": 2.0, "unit": "mm/yr", "source": "Heimsath et al. 1997 via REDESIGN-PLAN.md", "verified": false },
-      "k_min_per_m": { "value": 2.0, "unit": "1/m", "source": "Heimsath et al. 1997 via REDESIGN-PLAN.md", "verified": false },
-      "k_max_per_m": { "value": 4.0, "unit": "1/m", "source": "Heimsath et al. 1997 via REDESIGN-PLAN.md", "verified": false }
-    }
-  ]
+ "kind": "soil_production",
+ "version": 1,
+ "note": "Soil production function: rate = P0 * exp(-k * soil_depth). Warmth, water and rock type set P0 per tile.",
+ "items": [
+  {
+   "id": "heimsath_1997",
+   "name": "Heimsath et al. field range",
+   "source": "Heimsath et al. 1997, Nature 388:358, as summarised at en.wikipedia.org/wiki/Soil_production_function (values cross-checked there; the paper itself was not read)",
+   "p0_min_mm_per_yr": {
+    "value": 0.05,
+    "unit": "mm/yr",
+    "source": "0.05 to 0.14 mm/yr at south-eastern Australian sites (Heimsath et al. 2000, via the Wikipedia summary)",
+    "verified": true
+   },
+   "p0_max_mm_per_yr": {
+    "value": 2.0,
+    "unit": "mm/yr",
+    "source": "0.08 to 2.0 mm/yr at northern California sites (Heimsath et al. 1997, via the Wikipedia summary)",
+    "verified": true
+   },
+   "k_min_per_m": {
+    "value": 2.0,
+    "unit": "1/m",
+    "source": "k ranges from 2 to 4 per metre (Heimsath et al. 1997, via the Wikipedia summary)",
+    "verified": true
+   },
+   "k_max_per_m": {
+    "value": 4.0,
+    "unit": "1/m",
+    "source": "k ranges from 2 to 4 per metre (Heimsath et al. 1997, via the Wikipedia summary)",
+    "verified": true
+   }
+  }
+ ]
 }
