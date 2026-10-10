@@ -60,7 +60,7 @@ pub struct Hydro {
     rt: Option<Routing>,
 }
 struct Ids {
-    heat: StockId, w_air: StockId, w_sea: StockId, w_land: StockId, w_ground: StockId,
+    runoff_y: StockId, heat: StockId, w_air: StockId, w_sea: StockId, w_land: StockId, w_ground: StockId,
     snow: Vec<StockId>, ice: Vec<StockId>,
     rock: StockId, reg: StockId, sg: StockId, ss: StockId, sm: StockId, defl: StockId,
 }
@@ -72,16 +72,17 @@ impl Hydro {
 impl Module for Hydro {
     fn spec(&self) -> ModuleSpec {
         let mut reads: Vec<String> = ["heat", "w_sea", "w_land", "w_ground", "rock", "reg", "sed_g", "sed_s", "sed_m", "defl"].iter().map(|s| s.to_string()).collect();
-        let mut writes: Vec<String> = ["w_air", "w_sea", "w_land", "w_ground"].iter().map(|s| s.to_string()).collect();
+        let mut writes: Vec<String> = ["w_air", "w_sea", "w_land", "w_ground", "runoff_y"].iter().map(|s| s.to_string()).collect();
         for b in 0..BANDS { for k in ["w_snow", "w_ice"] { reads.push(format!("{k}{b}")); writes.push(format!("{k}{b}")); } }
         let mut s = ModuleSpec::new("hydro", Phase::Water);
         s.reads = reads; s.writes = writes;
+        s.boundaries = vec!["diag".into()];
         s
     }
     fn bind(&mut self, reg: &Registry, _: &Grid) -> Result<(), WorldError> {
         let g = |n: &str| reg.stock(n).ok_or_else(|| WorldError::Unknown(n.into()));
         self.ids = Some(Ids {
-            heat: g("heat")?, w_air: g("w_air")?, w_sea: g("w_sea")?, w_land: g("w_land")?, w_ground: g("w_ground")?,
+            runoff_y: g("runoff_y")?, heat: g("heat")?, w_air: g("w_air")?, w_sea: g("w_sea")?, w_land: g("w_land")?, w_ground: g("w_ground")?,
             snow: (0..BANDS).map(|b| g(&format!("w_snow{b}"))).collect::<Result<_, _>>()?,
             ice: (0..BANDS).map(|b| g(&format!("w_ice{b}"))).collect::<Result<_, _>>()?,
             rock: g("rock")?, reg: g("reg")?, sg: g("sed_g")?, ss: g("sed_s")?, sm: g("sed_m")?, defl: g("defl")?,
@@ -263,6 +264,10 @@ impl Module for Hydro {
         out.dense_local(ids.w_land, ids.w_ground, n).copy_from_slice(&drain_deep);
         out.dense_local(ids.w_ground, ids.w_land, n).copy_from_slice(&base_flow);
         out.dense_local(ids.w_land, ids.w_sea, n).copy_from_slice(&flood_land);
+
+        // hand the local runoff to the landscape for the year's river erosion
+        let river: Vec<f32> = (0..n).map(|i| run[i] + base_flow[i]).collect();
+        out.dense(Endpoint::Boundary(env.ph.b_diag), Endpoint::Stock(ids.runoff_y), n).copy_from_slice(&river);
 
         // rivers and lakes
         let land_stock = |d: usize| if is_sea[d] { ids.w_sea } else { ids.w_land };

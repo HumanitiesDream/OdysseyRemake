@@ -2,7 +2,9 @@
 
 use crate::climate::{Climate, ClimateParams, PPM_PER_KGC_M2, HD_OFF};
 use crate::hydro::Hydro;
+use crate::crust::Crust;
 use crate::ice::IceFlow;
+use crate::landscape::{initial_regolith, Landscape};
 use crate::sea::{SeaIce, SeaLevel};
 use crate::earth::{Earth, BANDS};
 use crate::env::*;
@@ -27,9 +29,11 @@ pub struct Setup {
     pub seed: u64,
     pub co2_ppm: f32,
     pub climate: ClimateParams,
+    /// If set, only these modules are added (by name). For module tests.
+    pub only: Option<Vec<String>>,
 }
 impl Setup {
-    pub fn today(n: u32) -> Setup { Setup { n, start_year: 1950, seed: 1, co2_ppm: 350.0, climate: ClimateParams::default() } }
+    pub fn today(n: u32) -> Setup { Setup { n, start_year: 1950, seed: 1, co2_ppm: 350.0, climate: ClimateParams::default(), only: None } }
 }
 
 pub struct Built {
@@ -53,9 +57,12 @@ pub fn build(s: &Setup) -> Result<Built, String> {
     let ph = Phys::register(&mut reg);
     // open sea at the start: not land, and not a marine basin filled by grounded ice
     let ocean0: Vec<bool> = (0..n).map(|i| !planet.earth.is_land(i) && planet.earth.ice[i] < 100.0).collect();
-    let rock0: Vec<f32> = (0..n).map(|i| ROCK_DATUM + planet.bed0[i]).collect();
     let tobs = Arc::new(planet.earth.tair.clone());
-    let env = Env { p: planet.clone(), ph: ph.clone(), base: Arc::new(rock0.clone()), ocean0: Arc::new(ocean0), tobs };
+    let mut env = Env { p: planet.clone(), ph: ph.clone(), base: Arc::new(vec![0.0; n]), ocean0: Arc::new(ocean0), tobs };
+    // today's bed height already holds today's soil: rock + regolith = datum + bed
+    let reg0 = initial_regolith(&env);
+    let rock0: Vec<f32> = (0..n).map(|i| ROCK_DATUM + planet.bed0[i] - reg0[i]).collect();
+    env.base = Arc::new((0..n).map(|i| rock0[i] + reg0[i]).collect());
 
     let mut world = World::new(grid.clone(), reg, s.seed, s.start_year);
     let area = &grid.area_km2;
@@ -64,6 +71,7 @@ pub fn build(s: &Setup) -> Result<Built, String> {
         world.stock_mut(ph.heat_deep)[i] = if env.ocean0[i] { HD_OFF } else { 0.0 };
         world.stock_mut(ph.c_air)[i] = (s.co2_ppm as f64 / PPM_PER_KGC_M2) as f32;
         world.stock_mut(ph.rock)[i] = rock0[i];
+        world.stock_mut(ph.reg)[i] = reg0[i];
         world.stock_mut(ph.defl)[i] = DEFL_OFFSET;
     }
     // today's ice sheets and glaciers: the mean thickness of the tile in every band
@@ -83,11 +91,19 @@ pub fn build(s: &Setup) -> Result<Built, String> {
     let _ = area;
     world.reset_ledger();
     let mut sim = Sim::new(world);
-    let add = |sim: &mut Sim, m: Box<dyn crate::module::Module>| sim.add_module(m).map_err(|e| e.to_string());
-    add(&mut sim, Box::new(Climate::new(env.clone(), s.climate.clone())))?;
-    add(&mut sim, Box::new(SeaIce::new(env.clone())))?;
-    add(&mut sim, Box::new(Hydro::new(env.clone())))?;
-    add(&mut sim, Box::new(IceFlow::new(env.clone())))?;
-    add(&mut sim, Box::new(SeaLevel::new(env.clone())))?;
+    let keep = |name: &str| s.only.as_ref().map_or(true, |v| v.iter().any(|x| x == name));
+    let add = |sim: &mut Sim, name: &str, m: Box<dyn crate::module::Module>| if keep(name) { sim.add_module(m).map_err(|e| e.to_string()) } else { Ok(()) };
+    // what the crust carried at the start, kg/m2
+    let base_load: Vec<f32> = (0..n).map(|i| {
+        let ice: Vec<f32> = (0..BANDS).map(|b| sim.world.stock(ph.w_ice[b])[i]).collect();
+        Crust::load_of(sim.world.stock(ph.w_sea)[i], &ice, 0.0)
+    }).collect();
+    add(&mut sim, "climate", Box::new(Climate::new(env.clone(), s.climate.clone())))?;
+    add(&mut sim, "seaice", Box::new(SeaIce::new(env.clone())))?;
+    add(&mut sim, "hydro", Box::new(Hydro::new(env.clone())))?;
+    add(&mut sim, "iceflow", Box::new(IceFlow::new(env.clone())))?;
+    add(&mut sim, "crust", Box::new(Crust::new(env.clone(), base_load)))?;
+    add(&mut sim, "landscape", Box::new(Landscape::new(env.clone())))?;
+    add(&mut sim, "sealevel", Box::new(SeaLevel::new(env.clone())))?;
     Ok(Built { sim, env })
 }

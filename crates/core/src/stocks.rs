@@ -8,16 +8,18 @@ pub struct StockId(pub u16);
 pub struct BoundaryId(pub u16);
 
 /// What a stock is made of. A flow may only move amounts inside one group.
+/// `Diag` is for hand-over fields between modules (for example a year of runoff). They are
+/// booked like the rest, so the audit still closes, but they are not matter.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
-pub enum Group { Water, Heat, Carbon, Nitrogen, Phosphorus, Sediment, Crust }
+pub enum Group { Water, Heat, Carbon, Nitrogen, Phosphorus, Sediment, Crust, Diag }
 
-pub const NGROUPS: usize = 7;
-pub const GROUPS: [Group; NGROUPS] = [Group::Water, Group::Heat, Group::Carbon, Group::Nitrogen, Group::Phosphorus, Group::Sediment, Group::Crust];
+pub const NGROUPS: usize = 8;
+pub const GROUPS: [Group; NGROUPS] = [Group::Water, Group::Heat, Group::Carbon, Group::Nitrogen, Group::Phosphorus, Group::Sediment, Group::Crust, Group::Diag];
 
 impl Group {
     pub fn idx(self) -> usize { self as usize }
     pub fn name(self) -> &'static str {
-        match self { Group::Water => "water", Group::Heat => "heat", Group::Carbon => "carbon", Group::Nitrogen => "nitrogen", Group::Phosphorus => "phosphorus", Group::Sediment => "sediment", Group::Crust => "crust" }
+        match self { Group::Water => "water", Group::Heat => "heat", Group::Carbon => "carbon", Group::Nitrogen => "nitrogen", Group::Phosphorus => "phosphorus", Group::Sediment => "sediment", Group::Crust => "crust", Group::Diag => "diagnostic" }
     }
 }
 

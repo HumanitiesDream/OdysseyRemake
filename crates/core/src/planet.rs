@@ -83,6 +83,8 @@ pub struct Phys {
     pub sed_m: StockId,
     // crust
     pub defl: StockId,
+    // hand-over from hydro to landscape: runoff of the year so far, mm
+    pub runoff_y: StockId,
     // outside accounts
     pub b_sun: BoundaryId,
     pub b_space: BoundaryId,
@@ -92,6 +94,7 @@ pub struct Phys {
     pub b_abyss: BoundaryId,
     pub b_greenhouse: BoundaryId,
     pub b_volcano: BoundaryId,
+    pub b_diag: BoundaryId,
 }
 
 impl Phys {
@@ -117,9 +120,10 @@ impl Phys {
         let sed_s = m(reg, "sed_s", Storage::Sparse);
         let sed_m = m(reg, "sed_m", Storage::Sparse);
         let defl = reg.add_stock("defl", "m", Group::Crust, Storage::Exact);
+        let runoff_y = reg.add_stock("runoff_y", "mm", Group::Diag, Storage::Exact);
         Phys {
             w_sea, w_seaice, w_air, w_land, w_ground, w_snow, w_ice, heat, heat_deep, c_air, c_ocean,
-            rock, reg: regl, sed_g, sed_s, sed_m, defl,
+            rock, reg: regl, sed_g, sed_s, sed_m, defl, runoff_y,
             b_sun: reg.add_boundary("sun", Group::Heat),
             b_space: reg.add_boundary("space", Group::Heat),
             b_season: reg.add_boundary("season", Group::Heat),
@@ -128,6 +132,7 @@ impl Phys {
             b_abyss: reg.add_boundary("abyss", Group::Sediment),
             b_greenhouse: reg.add_boundary("greenhouse", Group::Heat),
             b_volcano: reg.add_boundary("volcano", Group::Carbon),
+            b_diag: reg.add_boundary("diag", Group::Diag),
         }
     }
 

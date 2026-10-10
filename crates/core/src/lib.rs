@@ -7,6 +7,7 @@
 pub mod content;
 pub mod build;
 pub mod climate;
+pub mod crust;
 pub mod demo;
 pub mod earth;
 pub mod env;
@@ -14,6 +15,7 @@ pub mod flows;
 pub mod grid;
 pub mod hydro;
 pub mod ice;
+pub mod landscape;
 pub mod module;
 pub mod orbit;
 pub mod planet;
