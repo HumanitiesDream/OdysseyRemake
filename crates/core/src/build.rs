@@ -1,5 +1,6 @@
 //! Assemble a world: load the baked Earth, register stocks, set the starting state, add modules.
 
+use crate::carbon::{AirMix, OceanCarbon, DEEP_DIC, SURF_DIC};
 use crate::climate::{Climate, ClimateParams, PPM_PER_KGC_M2, HD_OFF};
 use crate::hazards::{HazardMap, Quakes, Volcanoes};
 use crate::hydro::Hydro;
@@ -70,6 +71,7 @@ pub fn build(s: &Setup) -> Result<Built, String> {
     for i in 0..n {
         world.stock_mut(ph.heat)[i] = env.h_from_t(i, env.tobs[0][i]);
         world.stock_mut(ph.heat_deep)[i] = if env.ocean0[i] { HD_OFF } else { 0.0 };
+        if env.ocean0[i] { world.stock_mut(ph.c_ocean)[i] = SURF_DIC as f32; world.stock_mut(ph.c_deep)[i] = DEEP_DIC as f32; }
         world.stock_mut(ph.c_air)[i] = (s.co2_ppm as f64 / PPM_PER_KGC_M2) as f32;
         world.stock_mut(ph.rock)[i] = rock0[i];
         world.stock_mut(ph.reg)[i] = reg0[i];
@@ -104,13 +106,16 @@ pub fn build(s: &Setup) -> Result<Built, String> {
     sim.world.stock_mut(ph.magma).copy_from_slice(&hz.initial_magma(s.seed));
     sim.world.reset_ledger();
     add(&mut sim, "quakes", Box::new(Quakes::new(env.clone(), hz.clone())))?;
-    add(&mut sim, "volcanoes", Box::new(Volcanoes::new(env.clone(), hz)))?;
+    add(&mut sim, "volcanoes", Box::new(Volcanoes::new(env.clone(), hz.clone())))?;
     add(&mut sim, "climate", Box::new(Climate::new(env.clone(), s.climate.clone())))?;
     add(&mut sim, "seaice", Box::new(SeaIce::new(env.clone())))?;
     add(&mut sim, "hydro", Box::new(Hydro::new(env.clone())))?;
     add(&mut sim, "iceflow", Box::new(IceFlow::new(env.clone())))?;
     add(&mut sim, "crust", Box::new(Crust::new(env.clone(), base_load)))?;
-    add(&mut sim, "landscape", Box::new(Landscape::new(env.clone())))?;
+    let share: Vec<f32> = { let w: Vec<f64> = (0..n).map(|i| hz.magma_m[i] * grid.area_km2[i] as f64).collect(); let sum: f64 = w.iter().sum::<f64>().max(1e-30); w.iter().map(|&x| (x / sum) as f32).collect() };
+    add(&mut sim, "airmix", Box::new(AirMix::new(env.clone())))?;
+    add(&mut sim, "oceancarbon", Box::new(OceanCarbon::new(env.clone())))?;
+    add(&mut sim, "landscape", Box::new(Landscape::new(env.clone(), share)))?;
     add(&mut sim, "sealevel", Box::new(SeaLevel::new(env.clone())))?;
     Ok(Built { sim, env })
 }

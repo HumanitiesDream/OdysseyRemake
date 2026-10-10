@@ -73,12 +73,15 @@ pub struct Landscape {
     /// m/yr, signed: negative is subsidence
     uplift: Vec<f32>,
     k: f64,
+    /// kg C per m2 x km2 per year taken from the air by weathering at calibration; volcanoes give it back
+    f_w: f64,
+    volc_share: Vec<f32>,
     stage: u8, // 0: first call, clear the runoff; 1: calibrate on the next call; 2: running
     rt: Option<Routing>,
 }
 struct Ids {
     rock: StockId, reg: StockId, sg: StockId, ss: StockId, sm: StockId, defl: StockId,
-    sea: StockId, heat: StockId, runoff: StockId, c_air: StockId, c_ocean: StockId, ice: Vec<StockId>,
+    sea: StockId, heat: StockId, runoff: StockId, c_air: StockId, c_deep: StockId, ice: Vec<StockId>,
 }
 
 struct Year { shift: Vec<f32>, sea: Vec<bool>, surface: Vec<f32>, runoff_mm: Vec<f32>, t_ann: Vec<f64>, icy: Vec<bool> }
@@ -96,7 +99,8 @@ struct Plan {
 }
 
 impl Landscape {
-    pub fn new(env: Env) -> Landscape { Landscape { env, ids: None, uplift: Vec::new(), k: 1.0, stage: 0, rt: None } }
+    /// `volc_share`: where volcanic carbon comes out, summing to 1.
+    pub fn new(env: Env, volc_share: Vec<f32>) -> Landscape { Landscape { env, ids: None, uplift: Vec::new(), k: 1.0, f_w: 0.0, volc_share, stage: 0, rt: None } }
     pub fn uplift(&self) -> &[f32] { &self.uplift }
 
     #[allow(clippy::too_many_arguments)]
@@ -215,15 +219,15 @@ impl Landscape {
 
 impl Module for Landscape {
     fn spec(&self) -> ModuleSpec {
-        let mut s = ModuleSpec::new("landscape", Phase::SoilPlants).every(12).boundaries(&["uplift", "abyss", "diag"]);
-        s.reads = ["rock", "reg", "sed_g", "sed_s", "sed_m", "defl", "w_sea", "heat", "runoff_y", "c_air", "c_ocean"].iter().map(|x| x.to_string()).chain((0..BANDS).map(|b| format!("w_ice{b}"))).collect();
-        s.writes = ["rock", "reg", "sed_g", "sed_s", "sed_m", "runoff_y", "c_air", "c_ocean"].iter().map(|x| x.to_string()).collect();
+        let mut s = ModuleSpec::new("landscape", Phase::SoilPlants).every(12).boundaries(&["uplift", "abyss", "diag", "volcano", "burial"]);
+        s.reads = ["rock", "reg", "sed_g", "sed_s", "sed_m", "defl", "w_sea", "heat", "runoff_y", "c_air", "c_deep"].iter().map(|x| x.to_string()).chain((0..BANDS).map(|b| format!("w_ice{b}"))).collect();
+        s.writes = ["rock", "reg", "sed_g", "sed_s", "sed_m", "runoff_y", "c_air", "c_deep"].iter().map(|x| x.to_string()).collect();
         s
     }
     fn bind(&mut self, reg: &Registry, _: &Grid) -> Result<(), WorldError> {
         let g = |n: &str| reg.stock(n).ok_or_else(|| WorldError::Unknown(n.into()));
         self.ids = Some(Ids { rock: g("rock")?, reg: g("reg")?, sg: g("sed_g")?, ss: g("sed_s")?, sm: g("sed_m")?, defl: g("defl")?, sea: g("w_sea")?, heat: g("heat")?,
-            runoff: g("runoff_y")?, c_air: g("c_air")?, c_ocean: g("c_ocean")?, ice: (0..BANDS).map(|b| g(&format!("w_ice{b}"))).collect::<Result<_, _>>()? });
+            runoff: g("runoff_y")?, c_air: g("c_air")?, c_deep: g("c_deep")?, ice: (0..BANDS).map(|b| g(&format!("w_ice{b}"))).collect::<Result<_, _>>()? });
         Ok(())
     }
     fn step(&mut self, ctx: &StepCtx, view: &View, out: &mut FlowOut) -> Result<(), WorldError> {
@@ -260,6 +264,7 @@ impl Module for Landscape {
                 let cut: f64 = (0..5).map(|k| p.take[k][i]).sum();
                 ((p.hill[i] + cut - p.dep[0][i] - p.dep[1][i] - p.dep[2][i]) / dt) as f32
             }).collect();
+            self.f_w = (0..n).map(|i| p.co2[i] * area[i] as f64).sum::<f64>() / dt;
             self.stage = 2;
         }
         let p = self.plan(grid, &y, &rt, regl, sg, ss, sm, self.k, dt);
@@ -286,8 +291,18 @@ impl Module for Landscape {
             if p.abyss[i] > 0.0 { out.push(tr, Endpoint::Boundary(env.ph.b_abyss), 0, i, p.abyss[i]); }
             if p.co2[i] > 0.0 {
                 let d = rt.dest_dry[i] as usize;
-                out.push(Endpoint::Stock(ids.c_air), Endpoint::Stock(ids.c_ocean), i, d, p.co2[i] * a);
+                out.push(Endpoint::Stock(ids.c_air), Endpoint::Stock(ids.c_deep), i, d, p.co2[i] * a);
             }
+        }
+        // The slow carbon cycle closes: volcanoes give back what weathering took at the start, and the
+        // sea buries carbonate at the same total. Weathering itself keeps responding to warmth and rain.
+        if self.f_w > 0.0 {
+            let deg: Vec<f32> = (0..n).map(|i| (self.f_w * dt * self.volc_share[i] as f64 / area[i] as f64) as f32).collect();
+            out.dense(Endpoint::Boundary(env.ph.b_volcano), Endpoint::Stock(ids.c_air), n).copy_from_slice(&deg);
+            let ocean_area: f64 = (0..n).filter(|&i| env.ocean0[i]).map(|i| area[i] as f64).sum();
+            let bury = (self.f_w * dt / ocean_area) as f32;
+            let b: Vec<f32> = (0..n).map(|i| if env.ocean0[i] { bury } else { 0.0 }).collect();
+            out.dense(Endpoint::Stock(ids.c_deep), Endpoint::Boundary(env.ph.b_burial), n).copy_from_slice(&b);
         }
         self.rt = Some(rt);
         Ok(())
@@ -295,14 +310,16 @@ impl Module for Landscape {
     fn save_state(&self) -> Option<Vec<u8>> {
         let mut b = vec![self.stage];
         b.extend(self.k.to_le_bytes());
+        b.extend(self.f_w.to_le_bytes());
         for u in &self.uplift { b.extend(u.to_le_bytes()); }
         Some(b)
     }
     fn load_state(&mut self, b: &[u8]) -> Result<(), WorldError> {
-        if b.len() < 9 { return Err(WorldError::Save("landscape state".into())); }
+        if b.len() < 17 { return Err(WorldError::Save("landscape state".into())); }
         self.stage = b[0];
         self.k = f64::from_le_bytes(b[1..9].try_into().unwrap());
-        self.uplift = b[9..].chunks_exact(4).map(|c| f32::from_le_bytes(c.try_into().unwrap())).collect();
+        self.f_w = f64::from_le_bytes(b[9..17].try_into().unwrap());
+        self.uplift = b[17..].chunks_exact(4).map(|c| f32::from_le_bytes(c.try_into().unwrap())).collect();
         Ok(())
     }
 }

@@ -75,6 +75,7 @@ pub struct Phys {
     // carbon, kg C/m2
     pub c_air: StockId,
     pub c_ocean: StockId,
+    pub c_deep: StockId,
     // solid matter, m of rock equivalent
     pub rock: StockId,
     pub reg: StockId,
@@ -98,6 +99,7 @@ pub struct Phys {
     pub b_abyss: BoundaryId,
     pub b_greenhouse: BoundaryId,
     pub b_volcano: BoundaryId,
+    pub b_burial: BoundaryId,
     pub b_diag: BoundaryId,
     pub b_plates: BoundaryId,
     pub b_rupture: BoundaryId,
@@ -120,6 +122,7 @@ impl Phys {
         let heat_deep = reg.add_stock("heat_deep", "MJ/m2", Group::Heat, Storage::Exact);
         let c_air = reg.add_stock("c_air", "kgC/m2", Group::Carbon, Storage::Exact);
         let c_ocean = reg.add_stock("c_ocean", "kgC/m2", Group::Carbon, Storage::Exact);
+        let c_deep = reg.add_stock("c_deep", "kgC/m2", Group::Carbon, Storage::Exact);
         let m = |reg: &mut Registry, n: &str, s| reg.add_stock(n, "m", Group::Sediment, s);
         let rock = m(reg, "rock", Storage::Exact);
         let regl = m(reg, "reg", Storage::Exact);
@@ -133,7 +136,7 @@ impl Phys {
         let magma = reg.add_stock("magma", "m", Group::Sediment, Storage::Sparse);
         let aerosol = reg.add_stock("aerosol", "Mt/km2", Group::Diag, Storage::Exact);
         Phys {
-            w_sea, w_seaice, w_air, w_land, w_ground, w_snow, w_ice, heat, heat_deep, c_air, c_ocean,
+            w_sea, w_seaice, w_air, w_land, w_ground, w_snow, w_ice, heat, heat_deep, c_air, c_ocean, c_deep,
             rock, reg: regl, sed_g, sed_s, sed_m, defl, runoff_y, strain, magma, aerosol,
             b_sun: reg.add_boundary("sun", Group::Heat),
             b_space: reg.add_boundary("space", Group::Heat),
@@ -143,6 +146,7 @@ impl Phys {
             b_abyss: reg.add_boundary("abyss", Group::Sediment),
             b_greenhouse: reg.add_boundary("greenhouse", Group::Heat),
             b_volcano: reg.add_boundary("volcano", Group::Carbon),
+            b_burial: reg.add_boundary("burial", Group::Carbon),
             b_diag: reg.add_boundary("diag", Group::Diag),
             b_plates: reg.add_boundary("plates", Group::Crust),
             b_rupture: reg.add_boundary("rupture", Group::Crust),

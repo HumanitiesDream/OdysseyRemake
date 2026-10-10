@@ -6,6 +6,7 @@
 
 pub mod content;
 pub mod build;
+pub mod carbon;
 pub mod climate;
 pub mod crust;
 pub mod demo;
