@@ -5,27 +5,36 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; worker-src blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data:">
 <title>Odyssey</title>
 <link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="extra.css">
 </head>
 <body>
 <canvas id="gl"></canvas>
 <div class="vignette"></div>
-<div id="titlebar" class="titlebar"><div class="tb-mark"><span class="sigil"></span><span class="tb-name">Odyssey</span><span id="tb-world" class="tb-world"></span></div></div>
 
+<!-- Window title strip (drag area) -->
+<div id="titlebar" class="titlebar">
+  <div class="tb-mark"><span class="sigil"></span><span class="tb-name">Odyssey</span><span id="tb-world" class="tb-world"></span></div>
+</div>
+
+<!-- Title screen -->
 <section id="screen-title" class="screen">
   <div class="title-block">
-    <div class="eyebrow">A living Earth</div>
+    <img class="emblem" src="img/hand.jpg" alt="">
     <h1 class="wordmark">Odyssey</h1>
+    <div class="subtitle">The story of man</div>
     <div class="rule"></div>
     <nav class="menu" id="title-menu">
-      <button class="menu-item" data-size="n24"><span>Quick world</span><small>300 km tiles, about 5 years a second</small></button>
-      <button class="menu-item" data-size="n48"><span>Standard world</span><small>150 km tiles, about 1 year a second</small></button>
-      <button class="menu-item" data-size="n480"><span>16 km globe</span><small>16 km tiles to look at, 150 km tiles underneath</small></button>
-      <button class="menu-item" data-act="quit"><span>Quit</span></button>
+      <button class="menu-item" data-act="continue" id="btn-continue" disabled><span>Continue the story</span><small id="continue-sub"></small></button>
+      <button class="menu-item" data-act="new"><span>Begin our story</span></button>
+      <button class="menu-item" data-act="load"><span>Recall our story</span></button>
+      <button class="menu-item" data-act="settings"><span>Settings</span></button>
+      <button class="menu-item" data-act="quit"><span>Pause our story</span></button>
     </nav>
   </div>
-  <div class="title-foot"><span id="ver">v0.1</span><span>The world starts from today's coasts and ice, already spun up for thousands of model years. People are not built yet.</span></div>
+  <div class="title-foot"><span id="ver">v0.50.0</span><span>Handprint: Chauvet Cave, France, about 30,000 years old.</span></div>
 </section>
 
+<!-- Loading -->
 <section id="screen-loading" class="screen hidden">
   <div class="loading-box">
     <div class="eyebrow" id="load-eyebrow">Shaping the world</div>
@@ -35,27 +44,54 @@
   </div>
 </section>
 
+<!-- In-world HUD -->
 <section id="hud" class="hidden">
   <div class="hud-top">
-    <div class="clock panel">
-      <button class="icon-btn" id="btn-play" title="Run or pause (Space)">Run</button>
-      <div class="date-block"><div class="date" id="year">Year -</div><div class="date-sub" id="date-sub">Paused</div></div>
-      <div class="steps" id="steps" title="How many years between picture updates"></div>
+    <div class="hud-btns">
+      <button class="clay-btn" id="btn-menu" title="Menu (Esc)"></button>
+      <button class="clay-btn" id="btn-history" title="World history (H)"></button>
+    </div>
+    <div class="clock tablet" id="clock">
+      <div class="date-block">
+        <div class="date" id="date">January</div>
+        <div class="year" id="year">Year 1</div>
+        <div class="date-sub" id="date-sub">Paused</div>
+      </div>
+      <svg class="dial" id="dial" viewBox="-100 -96 200 132"></svg>
     </div>
   </div>
+
   <aside class="mapmodes panel" id="mapmodes"></aside>
-  <aside class="legend panel" id="legend"><div class="lg-title" id="lg-title"></div><canvas id="lg-ramp" width="200" height="10"></canvas><div class="lg-row"><span id="lg-lo"></span><span id="lg-unit"></span><span id="lg-hi"></span></div></aside>
+  <aside class="legend panel hidden" id="legend"></aside>
+
   <div class="hud-bl">
-    <div class="readout panel" id="readout"></div>
-    <div class="keys">Drag to turn - Scroll to zoom - Click a tile - Space run/pause - B borders - G grid - Esc menu</div>
+    <div class="readout panel">
+      <div class="ro-row"><span class="ro-k">Altitude</span><span class="ro-v" id="ro-alt">-</span></div>
+      <div class="ro-row"><span class="ro-k">Tiles</span><span class="ro-v" id="ro-tiles">-</span></div>
+      <div class="ro-row"><span class="ro-k">Tile size</span><span class="ro-v" id="ro-size">-</span></div>
+      <div class="ro-row"><span class="ro-k">World temperature</span><span class="ro-v" id="ro-temp">-</span></div>
+      <div class="ro-row"><span class="ro-k">Carbon dioxide</span><span class="ro-v" id="ro-co2">-</span></div>
+      <div class="ro-row"><span class="ro-k">Ice on land</span><span class="ro-v" id="ro-ice">-</span></div>
+      <div class="ro-row hidden" id="ro-perf-row"><span class="ro-k">Engine (test)</span><span class="ro-v" id="ro-perf">-</span></div>
+    </div>
+    <div class="keys">Drag to turn · Scroll to zoom · Click a tile · Space pause · 1-5 speed · B borders · G grid · H history · Ctrl+S save · Esc menu</div>
   </div>
+
   <div class="inspector panel hidden" id="inspector">
-    <div class="insp-head"><div><div class="eyebrow" id="insp-kind">Tile</div><div class="insp-title" id="insp-title">-</div></div><button class="x-btn" id="insp-close" title="Close">x</button></div>
+    <div class="insp-head">
+      <div>
+        <div class="eyebrow" id="insp-kind">Tile</div>
+        <div class="insp-title" id="insp-title">-</div>
+      </div>
+      <button class="x-btn" id="insp-close" title="Close">×</button>
+    </div>
+    <div class="insp-tabs" id="insp-tabs"></div>
     <div class="insp-body" id="insp-body"></div>
   </div>
-  <div class="pause panel hidden" id="pause"><div class="pause-title">Odyssey</div><button class="menu-item" id="p-resume"><span>Back to the world</span></button><button class="menu-item" id="p-title"><span>Back to the title</span></button><button class="menu-item" id="p-quit"><span>Quit</span></button></div>
 </section>
-<div id="toast" class="toast hidden"></div>
+
+<div id="modal-root"></div>
+<div id="toasts"></div>
 
 <script src="grid.js"></script>
 <script src="globe.js"></script>

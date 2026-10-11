@@ -33,10 +33,15 @@ Not built yet: people, glacial erosion, wind and coasts. See `docs/DECISIONS.md`
 
 ## The Windows app
 
-`app/` is an Electron app around the Rust engine (`crates/core/src/bin/engine.rs`). It opens on the hex globe from the old game (`app/renderer/globe.js` and `grid.js`, same grid, same tile numbering as the engine). Choose a world, press Run, and the globe repaints as the engine advances the years. Click a tile to read its numbers.
+`app/` is an Electron app around the Rust engine (`crates/core/src/bin/engine.rs`). It uses the menus, clock and hex globe of the old game (v0.49): the title screen with the Chauvet handprint, "Begin our story", "Recall our story", Settings, the clay clock with its sun-to-moon speed dial, the map-mode rail, the tile inspector with tabs, the pause menu, saves and autosave.
 
-- Quick world: 300 km tiles. Standard world: 150 km tiles.
-- 16 km globe: the globe has 2.3 million 16 km tiles with real coasts and relief. The simulation underneath still runs on 150 km tiles, so the colours are blocky inside a simulation tile. A full 16 km simulation is about 400 times slower than the Quick world and does not run in real time.
+- Begin our story asks for a name, a seed and a map: Quick (300 km tiles), Standard (150 km) or Full detail (16 km coasts and relief drawn over the 150 km simulation).
+- The engine steps one month at a time. The dial sets the pace: 1 month, 3 months, 1 year or 5 years a second, or as fast as it goes.
+- Map modes: terrain (plants, snow and ice as they are now), elevation, soil carbon, land ice, temperature, rain against normal, snow, plants, plant-eaters, meat-eaters, fires, plankton, fish, sea ice and sea depth.
+- Saves go to the app's user folder (`saves/`). Each save is a small `.owsave` file with the story's details and a `.owstate` file with the whole engine state.
+- The title globe is today's Earth at 48 km, coloured from WorldClim rain and temperature (`data/look-n160.bin`, baked by `terrain 160 <prep> data/terrain-n160.bin data/look-n160.bin`).
+
+Not in this version: people, the ice-age start, rivers on the globe, the event log, storm tracks and the night sky.
 
 To get the exe: open the repository on GitHub, go to Actions, pick the "Windows app" run for your branch (or press "Run workflow"), and download the `Odyssey-windows` artifact. It holds an installer and a portable exe.
 

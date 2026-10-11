@@ -59,13 +59,22 @@ pub fn layers(b: &Built) -> Vec<Layer> {
     let depth: Vec<f32> = (0..grid.len()).map(|i| w_sea[i] / 1000.0).collect();
     let ice_m: Vec<f32> = ice_mm.iter().map(|x| x / 917.0).collect();
     let x1000 = |v: Vec<f32>| -> Vec<f32> { v.iter().map(|x| x * 1000.0).collect() };
+    let snow_bands: Vec<String> = (0..12).map(|k| format!("w_snow{k}")).collect();
+    let snow = sum(&snow_bands);
+    let wx = get("wx_p");
+    let s2 = 0.5 * crate::variability::RAIN_SIGMA * crate::variability::RAIN_SIGMA;
+    let rain: Vec<f32> = wx.iter().map(|&x| 100.0 * (x - crate::variability::WX_OFFSET - s2).exp()).collect();
+    let fire = get("fire");
     vec![
         Layer { name: "temp", label: "Surface temperature", unit: "C", lo: -40.0, hi: 35.0, land: true, both: true, vals: temp },
+        Layer { name: "rain", label: "Rain vs normal", unit: "%", lo: 40.0, hi: 160.0, land: true, both: false, vals: rain },
+        Layer { name: "snow", label: "Snow on the ground", unit: "mm water", lo: 0.0, hi: 400.0, land: true, both: false, vals: snow },
         Layer { name: "veg", label: "Plant carbon", unit: "kgC/m2", lo: 0.0, hi: 15.0, land: true, both: false, vals: veg },
         Layer { name: "soil", label: "Soil carbon", unit: "kgC/m2", lo: 0.0, hi: 30.0, land: true, both: false, vals: soil },
         Layer { name: "ice", label: "Land ice thickness", unit: "m", lo: 0.0, hi: 3000.0, land: true, both: false, vals: ice_m },
         Layer { name: "herb", label: "Plant-eating animals", unit: "gC/m2", lo: 0.0, hi: 2.0, land: true, both: false, vals: x1000(herb) },
         Layer { name: "carn", label: "Meat-eating animals", unit: "gC/m2", lo: 0.0, hi: 0.2, land: true, both: false, vals: x1000(carn) },
+        Layer { name: "fire", label: "Burning now", unit: "", lo: 0.0, hi: 1.0, land: true, both: false, vals: fire },
         Layer { name: "elev", label: "Land height", unit: "m", lo: 0.0, hi: 5000.0, land: true, both: false, vals: elev },
         Layer { name: "plank", label: "Plankton", unit: "gC/m2", lo: 0.0, hi: 5.0, land: false, both: false, vals: x1000(plank) },
         Layer { name: "fish", label: "Fish", unit: "gC/m2", lo: 0.0, hi: 3.0, land: false, both: false, vals: x1000(fish) },
@@ -76,10 +85,11 @@ pub fn layers(b: &Built) -> Vec<Layer> {
 
 /// One layer, one byte per simulation tile (0 means no value there), as a JSON event.
 pub fn layer_event(b: &Built, name: &str) -> Option<String> {
+    if name == "look" { return Some(look_event(b)); }
     let sea = sea_mask(b);
     let l = layers(b).into_iter().find(|l| l.name == name)?;
     let bytes: Vec<u8> = (0..sea.len()).map(|i| if !l.both && l.land == sea[i] { 0 } else { 1 + (((l.vals[i] - l.lo) / (l.hi - l.lo)).clamp(0.0, 1.0) * 254.0) as u8 }).collect();
-    Some(format!("{{\"event\":\"layer\",\"name\":\"{}\",\"label\":\"{}\",\"unit\":\"{}\",\"min\":{},\"max\":{},\"year\":{},\"data\":\"{}\"}}", l.name, l.label, l.unit, l.lo, l.hi, b.sim.world.clock.year(), b64(&bytes)))
+    Some(format!("{{\"event\":\"layer\",\"name\":\"{}\",\"label\":\"{}\",\"unit\":\"{}\",\"min\":{},\"max\":{},\"year\":{},\"month\":{},\"data\":\"{}\"}}", l.name, l.label, l.unit, l.lo, l.hi, b.sim.world.clock.year(), b.sim.world.clock.month_of_year(), b64(&bytes)))
 }
 
 /// 1 byte per tile: 1 for open sea, 0 for land.
@@ -147,6 +157,25 @@ pub fn stats_json(b: &Built) -> String {
     let ocean_area: f64 = (0..area.len()).filter(|&i| b.env.ocean0[i]).map(|i| area[i] as f64).sum();
     let ice_km3: f64 = (0..12).map(|k| { let s = w.stock(b.env.ph.w_ice[k]); (0..s.len()).map(|i| s[i] as f64 * area[i] as f64).sum::<f64>() }).sum::<f64>() / 1e6;
     let sle = ice_km3 * 1e9 / (ocean_area * 1e6);
-    format!("{{\"year\":{},\"t_mean\":{:.3},\"co2\":{:.2},\"veg\":{:.1},\"soil\":{:.1},\"fauna\":{:.3},\"ice_sle\":{:.2},\"violations\":{},\"skipped\":{}}}",
-        w.clock.year(), t_mean, ppm, sum_pre(&["c_leaf_", "c_wood_", "c_root_"]), sum_pre(&["c_litter", "c_sfast", "c_sslow", "c_spass", "c_carcass"]), sum_pre(&["c_fauna_"]), sle, w.violation_count, b.sim.skipped)
+    format!("{{\"year\":{},\"month\":{},\"months\":{},\"t_mean\":{:.3},\"co2\":{:.2},\"veg\":{:.1},\"soil\":{:.1},\"fauna\":{:.3},\"ice_sle\":{:.2},\"violations\":{},\"skipped\":{}}}",
+        w.clock.year(), w.clock.month_of_year(), w.clock.month_index, t_mean, ppm, sum_pre(&["c_leaf_", "c_wood_", "c_root_"]), sum_pre(&["c_litter", "c_sfast", "c_sslow", "c_spass", "c_carcass"]), sum_pre(&["c_fauna_"]), sle, w.violation_count, b.sim.skipped)
+}
+
+/// The natural look of the land and sea, packed in one byte per tile: 1 + white * 16 + green.
+/// green (0-15) is plant carbon on land; white (0-14) is snow and land ice on land, sea ice at sea.
+pub fn look_event(b: &Built) -> String {
+    let sea = sea_mask(b);
+    let ls = layers(b);
+    let get = |nm: &str| &ls.iter().find(|l| l.name == nm).unwrap().vals;
+    let (veg, snow, ice, sice) = (get("veg"), get("snow"), get("ice"), get("seaice"));
+    let bytes: Vec<u8> = (0..sea.len()).map(|i| {
+        let (green, white) = if sea[i] { (0.0, (sice[i] / 600.0).sqrt()) } else {
+            ((veg[i] / 12.0).sqrt(), ((snow[i] + ice[i] * 917.0) / 300.0).powf(0.75))
+        };
+        let g = (green.clamp(0.0, 1.0) * 15.0).round() as u8;
+        let w = (white.clamp(0.0, 1.0) * 14.0).round() as u8;
+        1 + w * 16 + g
+    }).collect();
+    format!("{{\"event\":\"layer\",\"name\":\"look\",\"label\":\"Terrain\",\"unit\":\"\",\"min\":0,\"max\":0,\"year\":{},\"month\":{},\"data\":\"{}\"}}",
+        b.sim.world.clock.year(), b.sim.world.clock.month_of_year(), b64(&bytes))
 }
