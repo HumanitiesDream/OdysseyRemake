@@ -1,0 +1,40 @@
+name: Windows app
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "claude/sweet-cray-7jkofl", "main" ]
+    paths: [ "app/**", "crates/**", "data/**", ".github/workflows/windows-app.yml" ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build the engine
+        run: cargo build --release --bin engine
+
+      - name: Gather the engine and its data next to the app
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force app/engine | Out-Null
+          Copy-Item target/release/engine.exe app/engine/odyssey-engine.exe
+          Copy-Item -Recurse data app/engine/data
+          Get-ChildItem app/engine -Recurse | Select-Object -First 30 FullName
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Build the installer and the portable exe
+        working-directory: app
+        run: |
+          npm install --no-audit --no-fund
+          npm run dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Odyssey-windows
+          path: |
+            app/dist/*.exe

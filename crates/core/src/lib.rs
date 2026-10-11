@@ -38,6 +38,7 @@ pub mod sim;
 pub mod stocks;
 pub mod units;
 pub mod variability;
+pub mod view;
 pub mod world;
 
 pub use flows::{Endpoint, Event, EventKind, FlowOut};

@@ -25,8 +25,13 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 /// Where baked data lives: `$ODYSSEY_DATA/baked`, else the repository's `data/baked`.
+/// Where the data files are: the ODYSSEY_DATA folder, else a `data` folder next to the program, else the source tree.
 pub fn data_dir() -> PathBuf {
-    std::env::var("ODYSSEY_DATA").map(PathBuf::from).unwrap_or_else(|_| Path::new(env!("CARGO_MANIFEST_DIR")).join("../../data"))
+    if let Ok(d) = std::env::var("ODYSSEY_DATA") { return PathBuf::from(d); }
+    if let Ok(exe) = std::env::current_exe() {
+        if let Some(dir) = exe.parent() { let beside = dir.join("data"); if beside.join("plant_types.json").exists() { return beside; } }
+    }
+    Path::new(env!("CARGO_MANIFEST_DIR")).join("../../data")
 }
 
 #[derive(Clone, Debug)]

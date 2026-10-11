@@ -1,0 +1,24 @@
+{
+  "name": "odyssey",
+  "version": "0.1.0",
+  "description": "Odyssey world simulator",
+  "author": "HumanitiesDream",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win --publish never"
+  },
+  "devDependencies": {
+    "electron": "33.2.1",
+    "electron-builder": "25.1.8"
+  },
+  "build": {
+    "appId": "org.humanitiesdream.odyssey",
+    "productName": "Odyssey",
+    "files": ["main.js", "preload.js", "index.html"],
+    "extraResources": [{ "from": "engine", "to": "engine" }],
+    "win": { "target": ["portable", "nsis"] },
+    "nsis": { "oneClick": false, "allowToChangeInstallationDirectory": true },
+    "artifactName": "Odyssey-${version}-${arch}.${ext}"
+  }
+}
