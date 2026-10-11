@@ -152,6 +152,7 @@ impl Module for Hydro {
         let mut firn: Vec<Vec<f32>> = (0..BANDS).map(|_| vec![0f32; n]).collect();
         let mut drain_deep = vec![0f32; n]; let mut base_flow = vec![0f32; n];
         let mut run = vec![0f32; n];
+        let mut spill_mm = vec![0f32; n];
         let mut flood_land = vec![0f32; n];
         let mut sea_snow: Vec<Vec<f32>> = (0..BANDS).map(|_| vec![0f32; n]).collect();
         let mut sea_ice: Vec<Vec<f32>> = (0..BANDS).map(|_| vec![0f32; n]).collect();
@@ -232,8 +233,13 @@ impl Module for Hydro {
             run[i] = 0.4 * (w - FIELD_CAP).max(0.0) + 0.04 * w;
             base_flow[i] = 0.08 * w_ground[i];
             // the draws on one pool in one month must fit inside it
-            let total = e_land[i] + drain_deep[i] + run[i];
-            if total > 0.95 * w { let k = 0.95 * w / total; e_land[i] *= k; drain_deep[i] *= k; run[i] *= k; }
+            // a lake that is over its brim spills the excess (at most half of what it holds in a month)
+            if rt.is_root(i) {
+                let over = w as f64 - rt.lake_cap[i] / a;
+                if over > 0.0 { spill_mm[i] = over.min(0.5 * w as f64) as f32; }
+            }
+            let total = e_land[i] + drain_deep[i] + run[i] + spill_mm[i];
+            if total > 0.95 * w { let k = 0.95 * w / total; e_land[i] *= k; drain_deep[i] *= k; run[i] *= k; spill_mm[i] *= k; }
             sum_e += e_land[i] as f64 * a;
         }
 
@@ -304,12 +310,9 @@ impl Module for Hydro {
             out.push(Endpoint::Stock(ids.w_land), Endpoint::Stock(land_stock(d)), i, d, run[i] as f64 * area[i] as f64);
         }
         for p in 0..n {
-            if !rt.is_root(p) || is_sea[p] { continue; }
-            let vol = w_land[p] as f64 * area[p] as f64;
-            if vol > rt.lake_cap[p] {
-                let d = rt.spill_to[p] as usize;
-                if d != p { out.push(Endpoint::Stock(ids.w_land), Endpoint::Stock(land_stock(d)), p, d, vol - rt.lake_cap[p]); }
-            }
+            if !rt.is_root(p) || is_sea[p] || spill_mm[p] <= 0.0 { continue; }
+            let d = rt.spill_to[p] as usize;
+            if d != p { out.push(Endpoint::Stock(ids.w_land), Endpoint::Stock(land_stock(d)), p, d, spill_mm[p] as f64 * area[p] as f64); }
         }
         let _ = (&p_land_tile,);
         Ok(())

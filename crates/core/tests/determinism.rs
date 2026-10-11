@@ -59,3 +59,20 @@ fn debug_which_stocks_differ_after_resume() {
         if nd > 0 { println!("{nm}: {nd} tiles differ, first {:?}", a.iter().zip(b.iter()).position(|(x, y)| x != y)); }
     }
 }
+
+/// Scan a saved state for stocks that hold NaN, infinity or negative values.
+#[test]
+#[ignore]
+fn debug_scan_state() {
+    let path = std::env::var("STATE").unwrap();
+    let mut b = build(&Setup::today(48)).unwrap();
+    b.sim.parallel = Parallel::Off;
+    save::read_into(&mut b.sim, &std::fs::read(path).unwrap()).unwrap();
+    for nm in b.sim.world.reg.stock_names() {
+        let v = b.sim.world.stock(b.sim.world.reg.stock(&nm).unwrap());
+        let bad = v.iter().filter(|x| !x.is_finite()).count();
+        let neg = v.iter().filter(|x| **x < -1e-9).count();
+        let first = v.iter().position(|x| !x.is_finite() || *x < -1e-9);
+        if bad > 0 || neg > 0 { println!("{nm}: {bad} non-finite, {neg} negative, first tile {first:?}"); }
+    }
+}

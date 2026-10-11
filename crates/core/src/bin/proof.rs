@@ -12,6 +12,7 @@ fn main() {
     let (mut load, mut save_to, mut out_path): (Option<String>, Option<String>, Option<String>) = (None, None, None);
     let mut start_year: i64 = 1950;
     let mut reseed: Option<u64> = None;
+    let mut stop_on_skip = false;
     let mut args = std::env::args().skip(1);
     while let Some(a) = args.next() {
         let mut v = |name: &str| args.next().unwrap_or_else(|| { eprintln!("{name} needs a value"); std::process::exit(2) });
@@ -23,6 +24,7 @@ fn main() {
             "--every" => every = v("--every").parse().unwrap(),
             "--start-year" => start_year = v("--start-year").parse().unwrap(),
             "--load" => load = Some(v("--load")),
+            "--stop-on-skip" => stop_on_skip = true,
             "--reseed" => reseed = Some(v("--reseed").parse().unwrap()),
             "--save" => save_to = Some(v("--save")),
             "--out" => out_path = Some(v("--out")),
@@ -61,7 +63,7 @@ fn main() {
     for k in 0..=steps {
         if k > 0 {
             // run the interval month by month so the ENSO sample is real
-            for _ in 0..every * 12 { b.sim.run_months(1); if b.sim.world.clock.month_of_year() == 0 { enso_acc.push(b.sim.world.stock(b.env.ph.enso_t)[0] as f64 - odyssey_core::variability::ENSO_OFFSET as f64); } }
+            for _ in 0..every * 12 { if stop_on_skip && b.sim.skipped > 0 { break; } b.sim.run_months(1); if b.sim.world.clock.month_of_year() == 0 { enso_acc.push(b.sim.world.stock(b.env.ph.enso_t)[0] as f64 - odyssey_core::variability::ENSO_OFFSET as f64); } }
         }
         let t_mean: f64 = { let h = b.sim.world.stock(b.env.ph.heat); (0..h.len()).map(|i| b.env.t_from_h(i, h[i]) as f64 * area[i] as f64).sum::<f64>() / total_area };
         let co2 = sum(&b, "c_air") * 1e12 / total_area / 1e6 * odyssey_core::climate::PPM_PER_KGC_M2 / 1e6 * 1e6 / 1e0;
@@ -81,6 +83,8 @@ fn main() {
         writeln!(out, "{},{:.3},{:.2},{:.2},{:.2},{:.1},{:.1},{:.1},{:.1},{:.3},{:.3},{:.3},{:.2},{},{},{},{},{},{},{}",
             b.sim.world.clock.year(), t_mean, co2_ppm, sl, ice, veg, soil, sum(&b, "c_ocean"), sum(&b, "c_deep"), fauna, sum(&b, "c_plankton"), b.sim.world.stock(b.env.ph.amoc_s)[0], sd, q, e, f, st, fl, b.sim.world.violation_count, b.sim.skipped).unwrap();
         out.flush().unwrap();
+        if stop_on_skip && b.sim.skipped > 0 { writeln!(out, "# stopped at the first skipped month").unwrap(); break; }
+        if let Some(p) = &save_to { if k % 10 == 0 && k > 0 { let _ = std::fs::write(format!("{p}.ckpt"), save::write(&b.sim).unwrap()); } }
         let _ = sl;
     }
     writeln!(out, "# ran {years} years in {:.0} s", t_run.elapsed().as_secs_f64()).unwrap();
