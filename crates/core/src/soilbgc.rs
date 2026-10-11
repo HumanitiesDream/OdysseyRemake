@@ -5,8 +5,8 @@
 //! permafrost carbon. What decays either goes to the air (heterotrophic respiration) or into the next pool.
 //!
 //! Organic nitrogen and phosphorus follow the carbon at each pool's own C:N and C:P. A pool with a
-//! lower ratio than the one feeding it needs mineral nitrogen to build. If the mineral pool is short,
-//! decay slows to fit. Mineral nitrogen enters by fixation and leaves by leaching and denitrification.
+//! lower ratio than the one feeding it asks for mineral nitrogen to build. If the mineral pool is short, the uptake
+//! is capped and decay carries on (a lump organic stock cannot track pool ratios, and slowing decay locked litter up). Mineral nitrogen enters by fixation and leaves by leaching and denitrification.
 //! Mineral phosphorus enters by rock weathering (in the landscape module), sticks to soil as an occluded
 //! pool, and is washed away slowly.
 

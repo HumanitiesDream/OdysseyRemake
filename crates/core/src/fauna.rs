@@ -15,7 +15,7 @@
 //! - Movement: animals move toward neighbours with more to eat, up to the guild's monthly range. They do
 //!   not cross the sea. Herds that follow the green season come out of this.
 //!
-//! There is no capacity map and no cap on kills. Overshoot, crashes and predator cycles come from the
+//! There is no capacity map and no cap on total numbers. Each sub-step does limit a single draw (4 percent of leaves, 40 percent of reachable prey, half of one prey guild) so that the month's books cannot overdraw a stock. Overshoot, crashes and predator cycles come from the
 //! numbers. Nitrogen and phosphorus follow carbon with the animals' own C:N of 5 and C:P of 60.
 //! Not yet: islands colonised by swimming or rafting, seed dispersal by animals, fish.
 

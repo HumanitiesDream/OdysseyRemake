@@ -73,3 +73,37 @@ Targets that are single numbers (global erosion, forest carbon by biome, storm c
 ## What the long run checks
 
 See `docs/VERIFIED.md`.
+
+## What baked data still drives
+
+Be clear about this. The plan says baked data is the start state and the test, never the driver. These parts break that rule today:
+
+- Temperature: the model computes a departure from today's monthly map. The seasonal cycle and a restoring term (B = 1.5 W/m2/K) pull toward that map.
+- Rain on land is today's observed rain scaled by 7 percent per K of departure and by plant cover. Rain over the sea is the residual that closes the air, spread by the observed pattern. The model does not compute rain from moisture and circulation.
+- Lightning and the ice mask in fire and fauna read the baked rain and the baked ice map. In an ice age those two masks would be wrong.
+- Ice temperature and plant winter limits use the observed temperature as a base.
+
+Tests that say "stays near the base" pass partly because of this. The climate responds to CO2, orbit, ice and plants. It does not yet make its own weather map.
+
+## Calibrations and tuned constants
+
+Each of these is fitted to an output, not derived:
+
+- Landscape: erodibility K fitted to 19 Gt/yr, then uplift inverted so today's land stands still. Volcanic CO2 return and carbonate burial are set to the first-year weathering rate, so the slow carbon cycle balances by construction.
+- Ice: calving speed is calibrated in the first three years after the spin-up so the ice starts level.
+- CO2: held at 350 ppm by the `nudge` during spin-up.
+- Soil carbon: starting pools are a guess by climate. The spin-up exists to settle them.
+- AMOC heat of 8 W/m2, cyclone genesis rate, fire lightning rate and the animal rate coefficients are tuned to the figures named in their module headers.
+- Nitrogen: fixation rises when mineral nitrogen is short. Phosphorus: rock P content and the sorption cap were set so a steady state exists.
+
+## Small limits in the modules
+
+Several modules cap a single draw per month (plants, fauna, fire, cyclones, AMOC step and the rain anomaly range). They exist so one month's books cannot overdraw a stock. They shape booms and crashes a little.
+
+## Known gaps found in review
+
+- Latent heat is not booked for snow melt, ice melt, calving or evaporation. Only sea ice and cyclones carry it.
+- A save made in the middle of a year does not resume exactly, because river routing is rebuilt only each January and is not saved. Saves made in January resume exactly (tested). The `proof` runner saves at the end of a year.
+- `spin_up` clears the violation counters when it ends.
+- `disaster_stocks.json` lists dam bursts, avalanches and pathogen stocks that have no module yet.
+- The predator to prey scaling does not match the literature (see VERIFIED.md).
