@@ -53,10 +53,18 @@ function createWindow() {
     webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false, sandbox: true }
   });
   win.setMenuBarVisibility(false);
-  win.loadFile(path.join(__dirname, 'index.html'));
+  win.loadFile(path.join(__dirname, 'renderer', 'index.html'));
   win.webContents.on('did-finish-load', () => { if (!engine) startEngine(); });
 }
 
+ipcMain.handle('terrain', () => {
+  const dir = engine ? (process.env.ODYSSEY_DATA_USED || '') : '';
+  const exe = enginePath();
+  const cand = [path.join(path.dirname(exe), 'data', 'terrain-n480.bin'), path.join(__dirname, '..', 'data', 'terrain-n480.bin'), dir && path.join(dir, 'terrain-n480.bin')].filter(Boolean);
+  for (const f of cand) { try { if (fs.existsSync(f)) return fs.readFileSync(f); } catch (_) {} }
+  return null;
+});
+ipcMain.on('quit', () => app.quit());
 ipcMain.on('cmd', (_e, obj) => {
   if (engine && engine.stdin.writable) engine.stdin.write(JSON.stringify(obj) + '\n');
   else send({ event: 'error', message: 'The engine is not running.' });
@@ -65,18 +73,17 @@ ipcMain.on('cmd', (_e, obj) => {
 app.whenReady().then(() => {
   createWindow();
   if (process.env.ODYSSEY_SELFTEST) {
-    // used by the build checks: load the world, run two years, save a screenshot, then quit
+    // used by the build checks: start a world, run two seconds, save a screenshot, then quit
     const wait = ms => new Promise(r => setTimeout(r, ms));
     win.webContents.on('did-finish-load', async () => {
       await wait(1500);
-      await win.webContents.executeJavaScript("document.getElementById('size').value='24';document.getElementById('load').click()");
-      await wait(8000);
-      await win.webContents.executeJavaScript("document.getElementById('years').value='3';document.getElementById('run').click()");
-      await wait(15000);
+      await win.webContents.executeJavaScript("document.querySelector('[data-size=\"" + (process.env.ODYSSEY_SIZE || 'n24') + "\"]').click()");
+      await wait(+(process.env.ODYSSEY_WAIT || 12000));
+      await win.webContents.executeJavaScript("document.getElementById('btn-play').click()");
+      await wait(6000);
       const img = await win.webContents.capturePage();
       fs.writeFileSync(process.env.ODYSSEY_SELFTEST, img.toPNG());
-      const txt = await win.webContents.executeJavaScript("document.getElementById('status').textContent");
-      console.log('STATUS:', txt);
+      console.log('YEAR:', await win.webContents.executeJavaScript("document.getElementById('year').textContent"));
       app.quit();
     });
   }

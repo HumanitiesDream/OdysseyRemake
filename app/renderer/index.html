@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; worker-src blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data:">
+<title>Odyssey</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<canvas id="gl"></canvas>
+<div class="vignette"></div>
+<div id="titlebar" class="titlebar"><div class="tb-mark"><span class="sigil"></span><span class="tb-name">Odyssey</span><span id="tb-world" class="tb-world"></span></div></div>
+
+<section id="screen-title" class="screen">
+  <div class="title-block">
+    <div class="eyebrow">A living Earth</div>
+    <h1 class="wordmark">Odyssey</h1>
+    <div class="rule"></div>
+    <nav class="menu" id="title-menu">
+      <button class="menu-item" data-size="n24"><span>Quick world</span><small>300 km tiles, about 5 years a second</small></button>
+      <button class="menu-item" data-size="n48"><span>Standard world</span><small>150 km tiles, about 1 year a second</small></button>
+      <button class="menu-item" data-size="n480"><span>16 km globe</span><small>16 km tiles to look at, 150 km tiles underneath</small></button>
+      <button class="menu-item" data-act="quit"><span>Quit</span></button>
+    </nav>
+  </div>
+  <div class="title-foot"><span id="ver">v0.1</span><span>The world starts from today's coasts and ice, already spun up for thousands of model years. People are not built yet.</span></div>
+</section>
+
+<section id="screen-loading" class="screen hidden">
+  <div class="loading-box">
+    <div class="eyebrow" id="load-eyebrow">Shaping the world</div>
+    <div class="load-title" id="load-title">-</div>
+    <div class="bar"><div class="bar-fill" id="load-fill"></div></div>
+    <div class="load-label" id="load-label">...</div>
+  </div>
+</section>
+
+<section id="hud" class="hidden">
+  <div class="hud-top">
+    <div class="clock panel">
+      <button class="icon-btn" id="btn-play" title="Run or pause (Space)">Run</button>
+      <div class="date-block"><div class="date" id="year">Year -</div><div class="date-sub" id="date-sub">Paused</div></div>
+      <div class="steps" id="steps" title="How many years between picture updates"></div>
+    </div>
+  </div>
+  <aside class="mapmodes panel" id="mapmodes"></aside>
+  <aside class="legend panel" id="legend"><div class="lg-title" id="lg-title"></div><canvas id="lg-ramp" width="200" height="10"></canvas><div class="lg-row"><span id="lg-lo"></span><span id="lg-unit"></span><span id="lg-hi"></span></div></aside>
+  <div class="hud-bl">
+    <div class="readout panel" id="readout"></div>
+    <div class="keys">Drag to turn - Scroll to zoom - Click a tile - Space run/pause - B borders - G grid - Esc menu</div>
+  </div>
+  <div class="inspector panel hidden" id="inspector">
+    <div class="insp-head"><div><div class="eyebrow" id="insp-kind">Tile</div><div class="insp-title" id="insp-title">-</div></div><button class="x-btn" id="insp-close" title="Close">x</button></div>
+    <div class="insp-body" id="insp-body"></div>
+  </div>
+  <div class="pause panel hidden" id="pause"><div class="pause-title">Odyssey</div><button class="menu-item" id="p-resume"><span>Back to the world</span></button><button class="menu-item" id="p-title"><span>Back to the title</span></button><button class="menu-item" id="p-quit"><span>Quit</span></button></div>
+</section>
+<div id="toast" class="toast hidden"></div>
+
+<script src="grid.js"></script>
+<script src="globe.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

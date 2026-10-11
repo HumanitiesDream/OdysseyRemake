@@ -27,8 +27,17 @@ pub fn pixel_tiles(b: &Built) -> Vec<usize> {
     pix
 }
 
-/// All map layers of the current world as JSON: {"year":..,"fields":{..},"mask":{..}}.
-pub fn maps_json(b: &Built, pix: &[usize]) -> String {
+pub struct Layer { pub name: &'static str, pub label: &'static str, pub unit: &'static str, pub lo: f32, pub hi: f32, pub land: bool, pub both: bool, pub vals: Vec<f32> }
+
+/// Sea or land flag per tile (true when the tile is open sea).
+pub fn sea_mask(b: &Built) -> Vec<bool> {
+    let w = &b.sim.world;
+    let w_sea = w.stock(w.reg.stock("w_sea").unwrap());
+    (0..w.grid.len()).map(|i| b.env.ocean0[i] && w_sea[i] > 50.0).collect()
+}
+
+/// Every layer's value on every tile of the simulation grid.
+pub fn layers(b: &Built) -> Vec<Layer> {
     let w = &b.sim.world;
     let grid = &w.grid;
     let get = |nm: &str| -> Vec<f32> { w.stock(w.reg.stock(nm).unwrap()).to_vec() };
@@ -45,37 +54,79 @@ pub fn maps_json(b: &Built, pix: &[usize]) -> String {
     let carn = fa(&["small_carnivore", "medium_carnivore", "large_carnivore"]);
     let plank = get("c_plankton");
     let fish = fa(&["fish", "large_fish"]);
-    let is_sea: Vec<bool> = (0..grid.len()).map(|i| b.env.ocean0[i] && w_sea[i] > 50.0).collect();
     let temp: Vec<f32> = (0..grid.len()).map(|i| b.env.t_from_h(i, heat[i]) - 273.15).collect();
     let elev: Vec<f32> = (0..grid.len()).map(|i| b.env.p.bed0[i]).collect();
     let depth: Vec<f32> = (0..grid.len()).map(|i| w_sea[i] / 1000.0).collect();
     let ice_m: Vec<f32> = ice_mm.iter().map(|x| x / 917.0).collect();
     let x1000 = |v: Vec<f32>| -> Vec<f32> { v.iter().map(|x| x * 1000.0).collect() };
-    // name, label, unit, values, min, max, land (true) or sea (false)
-    let fields: Vec<(&str, &str, &str, Vec<f32>, f32, f32, bool)> = vec![
-        ("temp", "Surface temperature", "C", temp, -40.0, 35.0, true),
-        ("veg", "Plant carbon", "kgC/m2", veg, 0.0, 15.0, true),
-        ("soil", "Soil carbon", "kgC/m2", soil, 0.0, 30.0, true),
-        ("ice", "Land ice thickness", "m", ice_m, 0.0, 3000.0, true),
-        ("herb", "Plant-eating animals", "gC/m2", x1000(herb), 0.0, 2.0, true),
-        ("carn", "Meat-eating animals", "gC/m2", x1000(carn), 0.0, 0.2, true),
-        ("plank", "Plankton", "gC/m2", x1000(plank), 0.0, 5.0, false),
-        ("fish", "Fish", "gC/m2", x1000(fish), 0.0, 3.0, false),
-        ("seaice", "Sea ice", "mm w.e.", sea_ice.clone(), 0.0, 2000.0, false),
-        ("depth", "Sea depth", "m", depth, 0.0, 6000.0, false),
-        ("elev", "Land height", "m", elev, 0.0, 5000.0, true),
-    ];
-    let mut json = format!("{{\"year\":{},\"fields\":{{", w.clock.year());
-    for (k, (name, label, unit_s, vals, lo, hi, land)) in fields.iter().enumerate() {
+    vec![
+        Layer { name: "temp", label: "Surface temperature", unit: "C", lo: -40.0, hi: 35.0, land: true, both: true, vals: temp },
+        Layer { name: "veg", label: "Plant carbon", unit: "kgC/m2", lo: 0.0, hi: 15.0, land: true, both: false, vals: veg },
+        Layer { name: "soil", label: "Soil carbon", unit: "kgC/m2", lo: 0.0, hi: 30.0, land: true, both: false, vals: soil },
+        Layer { name: "ice", label: "Land ice thickness", unit: "m", lo: 0.0, hi: 3000.0, land: true, both: false, vals: ice_m },
+        Layer { name: "herb", label: "Plant-eating animals", unit: "gC/m2", lo: 0.0, hi: 2.0, land: true, both: false, vals: x1000(herb) },
+        Layer { name: "carn", label: "Meat-eating animals", unit: "gC/m2", lo: 0.0, hi: 0.2, land: true, both: false, vals: x1000(carn) },
+        Layer { name: "elev", label: "Land height", unit: "m", lo: 0.0, hi: 5000.0, land: true, both: false, vals: elev },
+        Layer { name: "plank", label: "Plankton", unit: "gC/m2", lo: 0.0, hi: 5.0, land: false, both: false, vals: x1000(plank) },
+        Layer { name: "fish", label: "Fish", unit: "gC/m2", lo: 0.0, hi: 3.0, land: false, both: false, vals: x1000(fish) },
+        Layer { name: "seaice", label: "Sea ice", unit: "mm w.e.", lo: 0.0, hi: 2000.0, land: false, both: false, vals: sea_ice },
+        Layer { name: "depth", label: "Sea depth", unit: "m", lo: 0.0, hi: 6000.0, land: false, both: false, vals: depth },
+    ]
+}
+
+/// One layer, one byte per simulation tile (0 means no value there), as a JSON event.
+pub fn layer_event(b: &Built, name: &str) -> Option<String> {
+    let sea = sea_mask(b);
+    let l = layers(b).into_iter().find(|l| l.name == name)?;
+    let bytes: Vec<u8> = (0..sea.len()).map(|i| if !l.both && l.land == sea[i] { 0 } else { 1 + (((l.vals[i] - l.lo) / (l.hi - l.lo)).clamp(0.0, 1.0) * 254.0) as u8 }).collect();
+    Some(format!("{{\"event\":\"layer\",\"name\":\"{}\",\"label\":\"{}\",\"unit\":\"{}\",\"min\":{},\"max\":{},\"year\":{},\"data\":\"{}\"}}", l.name, l.label, l.unit, l.lo, l.hi, b.sim.world.clock.year(), b64(&bytes)))
+}
+
+/// 1 byte per tile: 1 for open sea, 0 for land.
+pub fn sea_event(b: &Built) -> String {
+    let bytes: Vec<u8> = sea_mask(b).iter().map(|&s| s as u8).collect();
+    format!("{{\"event\":\"sea\",\"data\":\"{}\"}}", b64(&bytes))
+}
+
+/// Everything known about one tile, for an inspector.
+pub fn tile_json(b: &Built, id: usize) -> String {
+    let sea = sea_mask(b);
+    let g = &b.sim.world.grid;
+    let mut rows = String::new();
+    for (k, l) in layers(b).iter().enumerate() {
+        if !l.both && l.land == sea[id] { continue; }
+        if k > 0 && !rows.is_empty() { rows.push(','); }
+        rows.push_str(&format!("{{\"label\":\"{}\",\"unit\":\"{}\",\"value\":{:.4}}}", l.label, l.unit, l.vals[id]));
+    }
+    format!("{{\"event\":\"tile\",\"id\":{id},\"lat\":{:.2},\"lon\":{:.2},\"area_km2\":{:.0},\"sea\":{},\"rows\":[{rows}]}}",
+        g.lat[id].to_degrees(), g.lon[id].to_degrees(), g.area_km2[id], sea[id])
+}
+
+/// For each cell of a finer grid, the simulation tile it lies in (nearest centre), as little-endian u32.
+pub fn parents_event(sim_n: u32, view_n: u32) -> String {
+    let fine = crate::grid::Grid::new(view_n);
+    let co = crate::grid::Coarse::new(&fine, sim_n);
+    let mut bytes = Vec::with_capacity(co.parent.len() * 4);
+    for p in &co.parent { bytes.extend_from_slice(&p.to_le_bytes()); }
+    format!("{{\"event\":\"parents\",\"view\":{view_n},\"data\":\"{}\"}}", b64(&bytes))
+}
+
+/// All map layers of the current world as JSON: {"year":..,"fields":{..},"mask":{..}}.
+pub fn maps_json(b: &Built, pix: &[usize]) -> String {
+    let is_sea = sea_mask(b);
+    let grid = &b.sim.world.grid;
+    let _ = grid;
+    let mut json = format!("{{\"year\":{},\"fields\":{{", b.sim.world.clock.year());
+    for (k, l) in layers(b).iter().enumerate() {
         let mut bytes = vec![0u8; W * H];
         for p in 0..W * H {
             let t = pix[p];
-            if *land == is_sea[t] { continue; }
-            let f = ((vals[t] - lo) / (hi - lo)).clamp(0.0, 1.0);
+            if !l.both && l.land == is_sea[t] { continue; }
+            let f = ((l.vals[t] - l.lo) / (l.hi - l.lo)).clamp(0.0, 1.0);
             bytes[p] = 1 + (f * 254.0) as u8;
         }
         if k > 0 { json.push(','); }
-        json.push_str(&format!("\"{name}\":{{\"label\":\"{label}\",\"unit\":\"{unit_s}\",\"min\":{lo},\"max\":{hi},\"data\":\"{}\"}}", b64(&bytes)));
+        json.push_str(&format!("\"{}\":{{\"label\":\"{}\",\"unit\":\"{}\",\"min\":{},\"max\":{},\"data\":\"{}\"}}", l.name, l.label, l.unit, l.lo, l.hi, b64(&bytes)));
     }
     let mask: Vec<u8> = (0..W * H).map(|p| if is_sea[pix[p]] { 0 } else { 1 }).collect();
     json.push_str(&format!("}},\"mask\":{{\"data\":\"{}\"}}}}", b64(&mask)));

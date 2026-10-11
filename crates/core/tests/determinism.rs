@@ -76,3 +76,11 @@ fn debug_scan_state() {
         if bad > 0 || neg > 0 { println!("{nm}: {bad} non-finite, {neg} negative, first tile {first:?}"); }
     }
 }
+
+#[test]
+#[ignore]
+fn debug_dump_grid_n6() {
+    let g = odyssey_core::grid::Grid::new(6);
+    let v: Vec<[f32; 3]> = g.pos.clone();
+    std::fs::write("/tmp/runs/rust_centers.json", format!("{:?}", v)).unwrap();
+}

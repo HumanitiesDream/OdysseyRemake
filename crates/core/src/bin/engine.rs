@@ -28,6 +28,7 @@ fn main() {
     let (tx, rx) = mpsc::channel::<String>();
     std::thread::spawn(move || { for l in std::io::stdin().lock().lines().map_while(Result::ok) { if tx.send(l).is_err() { break; } } });
     let mut world: Option<(Built, Vec<usize>)> = None;
+    let mut layer_name = String::from("temp");
     let mut queue: std::collections::VecDeque<String> = Default::default();
     loop {
         let line = match queue.pop_front() { Some(l) => l, None => match rx.recv() { Ok(l) => l, Err(_) => return } };
@@ -48,14 +49,25 @@ fn main() {
                             Err(e) => err(&format!("cannot load {}: {e}", path.display())),
                             Ok(()) => {
                                 if let Some(sd) = seed { b.sim.world.seed = sd; }
-                                let pix = view::pixel_tiles(&b);
-                                say(&format!("{{\"event\":\"ready\",\"n\":{n},\"cells\":{},\"stats\":{}}}", b.sim.world.grid.len(), view::stats_json(&b)));
-                                say(&format!("{{\"event\":\"maps\",\"maps\":{}}}", view::maps_json(&b, &pix)));
+                                let pix = Vec::new();
+                                let view_n: u32 = field(&line, "view").and_then(|v| v.parse().ok()).unwrap_or(n);
+                                say(&format!("{{\"event\":\"ready\",\"n\":{n},\"view\":{view_n},\"cells\":{},\"stats\":{}}}", b.sim.world.grid.len(), view::stats_json(&b)));
+                                if view_n != n { say(&view::parents_event(n, view_n)); }
+                                say(&view::sea_event(&b));
+                                if let Some(l) = view::layer_event(&b, &layer_name) { say(&l); }
                                 world = Some((b, pix));
                             }
                         }
                     }
                 }
+            }
+            "layer" => {
+                if let Some(nm) = field(&line, "name") { layer_name = nm; }
+                match &world { Some((b, _)) => { if let Some(l) = view::layer_event(b, &layer_name) { say(&l); } } None => err("load a world first") }
+            }
+            "tile" => {
+                let id: usize = field(&line, "id").and_then(|v| v.parse().ok()).unwrap_or(0);
+                match &world { Some((b, _)) if id < b.sim.world.grid.len() => say(&view::tile_json(b, id)), _ => err("no such tile") }
             }
             "maps" => match &world { Some((b, pix)) => say(&format!("{{\"event\":\"maps\",\"maps\":{}}}", view::maps_json(b, pix))), None => err("load a world first") },
             "run" => {
@@ -65,12 +77,12 @@ fn main() {
                 'run: for y in 1..=years {
                     b.sim.run_years(1);
                     say(&format!("{{\"event\":\"stats\",\"stats\":{}}}", view::stats_json(b)));
-                    if y % every == 0 { say(&format!("{{\"event\":\"maps\",\"maps\":{}}}", view::maps_json(b, pix))); }
+                    if y % every == 0 { if let Some(l) = view::layer_event(b, &layer_name) { say(&l); } }
                     while let Ok(l) = rx.try_recv() {
                         match field(&l, "cmd").unwrap_or_default().as_str() { "stop" => break 'run, "quit" => return, _ => queue.push_back(l) }
                     }
                 }
-                say(&format!("{{\"event\":\"maps\",\"maps\":{}}}", view::maps_json(b, pix)));
+                if let Some(l) = view::layer_event(b, &layer_name) { say(&l); }
                 say("{\"event\":\"done\"}");
             }
             "stop" => {}

@@ -15,7 +15,7 @@
   "build": {
     "appId": "org.humanitiesdream.odyssey",
     "productName": "Odyssey",
-    "files": ["main.js", "preload.js", "index.html"],
+    "files": ["main.js", "preload.js", "renderer/**"],
     "extraResources": [{ "from": "engine", "to": "engine" }],
     "win": { "target": ["portable", "nsis"] },
     "nsis": { "oneClick": false, "allowToChangeInstallationDirectory": true },
