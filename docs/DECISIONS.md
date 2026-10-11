@@ -25,7 +25,12 @@ A 48 km tile is far wider than a river valley. A stream power law with a plain t
 
 ## Grid size
 
-The grid is n48 (about 48 km tiles) for the 10,000-year runs. n24 (about 100 km) runs in tests. I kept the n160 level because it costs nothing to keep and a user may want it. It is too slow for the long runs: about 100 times the cost of n24 with all modules on.
+Tile width is about the square root of 510 million km2 divided by (10 n^2 + 2). That gives n24 about 300 km, n48 about 150 km, n80 about 90 km and n160 about 45 km.
+
+- n160 is the standard size (the "48 km" of the plan). It is too slow for 10,000-year runs on this machine: about 20 s per simulated year, so about 55 hours for one run.
+- The long runs use n48 (150 km tiles): about 1.8 s per simulated year. Tests use n24.
+- The 16 km level (n480) is removed. It had no use at these speeds.
+- Results at 150 km tiles are coarse. Rivers, coasts and small lakes are blurred. Climate, carbon and ecology totals do not need finer tiles, and that is what the long run checks.
 
 ## Datasets
 

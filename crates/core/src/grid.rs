@@ -9,11 +9,12 @@
 //! fine cells. Moving it down splits it by weight. Both are exact in f64, so a
 //! flow handed between grids loses nothing to interpolation.
 //!
-//! Standard sizes: n160 (48 km, 256,002 cells) and n480 (16 km, 2,304,002 cells).
+//! Standard size: n160 (about 45 km, 256,002 cells). The 16 km level (n480) was dropped: it has no use at the
+//! speeds the model runs.
+//! Tile width is about sqrt(510e6 / (10 n^2 + 2)) km: n24 300 km, n48 150 km, n80 90 km, n160 45 km.
 
 pub const EARTH_RADIUS_KM: f64 = 6371.0;
 pub const N160: u32 = 160;
-pub const N480: u32 = 480;
 
 #[derive(Debug)]
 pub struct Grid {

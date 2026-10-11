@@ -116,8 +116,11 @@ impl Module for SoilBgc {
                 }
             }
             // mineralisation cannot free more than the organic pool holds (it can fall short of the ratios when nitrogen is scarce)
-            if dn >= 0.0 { n_in[i] = (dn * s).min(0.3 * n_org[i].max(0.0) as f64) as f32; } else { n_out[i] = (-dn * s).min(0.4 * n_min[i].max(0.0) as f64) as f32; }
-            if dpp >= 0.0 { p_in[i] = (dpp * s).min(0.3 * p_org[i].max(0.0) as f64) as f32; } else { p_out[i] = (-dpp * s).min(0.4 * p_min[i].max(0.0) as f64) as f32; }
+            // organic N cannot fall below half of what the carbon pools hold at their own ratios
+            let n_floor: f64 = 0.5 * (0..4).map(|k| c[k][i] as f64 / CN[k] as f64).sum::<f64>();
+            let p_floor: f64 = 0.5 * (0..4).map(|k| c[k][i] as f64 / CP[k] as f64).sum::<f64>();
+            if dn >= 0.0 { n_in[i] = (dn * s).min(0.3 * (n_org[i] as f64 - n_floor).max(0.0)) as f32; } else { n_out[i] = (-dn * s).min(0.4 * n_min[i].max(0.0) as f64) as f32; }
+            if dpp >= 0.0 { p_in[i] = (dpp * s).min(0.3 * (p_org[i] as f64 - p_floor).max(0.0)) as f32; } else { p_out[i] = (-dpp * s).min(0.4 * p_min[i].max(0.0) as f64) as f32; }
             // inputs and losses of the mineral pools
             let f_in = ((tc + 5.0) / 25.0).clamp(0.0, 1.0) * (w / FIELD_CAP as f64).min(1.0);
             // fixation rises when mineral nitrogen is scarce (fixers win where nitrogen is short)

@@ -37,7 +37,7 @@ impl Module for SeaIce {
             let target = self.env.sea_ice_mass(i, heat[i]);
             let d = target - ice[i];
             // never freeze more water than the tile holds
-            if d > 0.0 { freeze[i] = d.min(0.9 * sea[i]); } else { melt[i] = -d; }
+            if d > 0.0 { freeze[i] = d.min(0.9 * sea[i].max(0.0)).max(0.0); } else { melt[i] = (-d).min(ice[i].max(0.0)); }
         }
         out.dense_local(self.sea, self.ice, n).copy_from_slice(&freeze);
         out.dense_local(self.ice, self.sea, n).copy_from_slice(&melt);

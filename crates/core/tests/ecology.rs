@@ -419,3 +419,22 @@ fn debug_ice_flows() {
     println!("snow>sea: {:.0}", agg("hydro", "w_snow", "w_sea"));
     println!("all other ice rows:"); for (k, v) in rows.iter().filter(|(k, _)| k.contains("w_ice") && !k.starts_with("hydro: w_ice") && !k.starts_with("iceflow")).take(10) { println!("  {k}: {v:.0}"); }
 }
+
+/// Follow one tile month by month from a saved state.
+#[test]
+#[ignore]
+fn debug_follow_tile() {
+    let path = std::env::var("STATE").unwrap_or("/tmp/runs/n24.state".into());
+    let tile: usize = std::env::var("TILE").ok().and_then(|v| v.parse().ok()).unwrap_or(4583);
+    let mut b = build(&Setup::today(24)).unwrap();
+    b.sim.parallel = Parallel::Off;
+    odyssey_core::save::read_into(&mut b.sim, &std::fs::read(path).unwrap()).unwrap();
+    println!("tile {tile} lat {:.1} lon {:.1} ocean0 {}", b.env.p.lat_deg[tile], b.sim.world.grid.lon[tile].to_degrees(), b.env.ocean0[tile]);
+    let names = ["n_org", "n_min", "c_litter", "c_sfast", "c_sslow", "c_spass", "w_land"];
+    b.sim.trace = None;
+    for m in 0..14 {
+        let line: Vec<String> = names.iter().map(|nm| format!("{nm} {:.3e}", b.sim.world.stock(b.sim.world.reg.stock(nm).unwrap())[tile])).collect();
+        println!("m{m}: {} | viol {}", line.join(" "), b.sim.world.violation_count);
+        b.sim.run_months(1);
+    }
+}

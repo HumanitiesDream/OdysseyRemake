@@ -190,7 +190,7 @@ pub fn build(s: &Setup) -> Result<Built, String> {
     add(&mut sim, "amoc", Box::new(crate::amoc::Amoc::new(env.clone())))?;
     add(&mut sim, "cyclones", Box::new(crate::cyclones::Cyclones::new(env.clone())))?;
     add(&mut sim, "dispersal", Box::new(Dispersal::new(env.clone(), set.clone(), eco.clone())))?;
-    add(&mut sim, "iceflow", Box::new(IceFlow::new(env.clone())))?;
+    add(&mut sim, "iceflow", Box::new(IceFlow::new(env.clone(), s.spin_up_years * 12)))?;
     add(&mut sim, "crust", Box::new(Crust::new(env.clone(), base_load)))?;
     let share: Vec<f32> = { let w: Vec<f64> = (0..n).map(|i| hz.magma_m[i] * grid.area_km2[i] as f64).collect(); let sum: f64 = w.iter().sum::<f64>().max(1e-30); w.iter().map(|&x| (x / sum) as f32).collect() };
     if s.spin_up_years > 0 { add(&mut sim, "nudge", Box::new(crate::carbon::Nudge::new(env.clone(), s.co2_ppm as f64, s.spin_up_years * 12)))?; }

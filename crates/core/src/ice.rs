@@ -39,11 +39,12 @@ const VALLEY: f64 = 0.15;
 /// Years in which the calving speed is calibrated.
 const CALIB_YEARS: u8 = 3;
 
-pub struct IceFlow { env: Env, ids: Option<Ids>, calv: f64, prev_mass: f64, prev_calving: f64, calls: u8 }
+pub struct IceFlow { env: Env, ids: Option<Ids>, calv: f64, prev_mass: f64, prev_calving: f64, calls: u8, calib_from: u64 }
 struct Ids { ice: Vec<StockId>, sea: StockId, rock: StockId, reg: StockId, sg: StockId, ss: StockId, sm: StockId, defl: StockId }
 
 impl IceFlow {
-    pub fn new(env: Env) -> Self { IceFlow { env, ids: None, calv: 1.0, prev_mass: 0.0, prev_calving: 0.0, calls: 0 } }
+    /// `calib_from`: the month from which the calving speed is calibrated (the end of the spin-up).
+    pub fn new(env: Env, calib_from: u64) -> Self { IceFlow { env, ids: None, calv: 1.0, prev_mass: 0.0, prev_calving: 0.0, calls: 0, calib_from } }
 }
 
 impl Module for IceFlow {
@@ -84,6 +85,7 @@ impl Module for IceFlow {
         // three years the net change of the whole ice stock is turned into a change of calving, so that the ice
         // starts level. After that the calving speed is fixed and the ice follows the climate freely.
         let total: f64 = (0..n).map(|i| mass[i] * area[i] as f64).sum();
+        if ctx.month_index < self.calib_from { self.calls = 0; }
         if self.calls >= 1 && self.calls <= CALIB_YEARS && self.prev_calving > 0.0 {
             let net = total - self.prev_mass;
             self.calv = (self.calv * (1.0 + net / self.prev_calving)).clamp(0.2 * self.calv.min(1.0), 3.0);

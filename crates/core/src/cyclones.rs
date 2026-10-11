@@ -12,7 +12,7 @@
 //!
 //! The genesis rate is a placeholder constant set so that the world has about 80 storms a year (Emanuel 2003,
 //! from memory, flagged). Not yet: wind damage to plants, storm surge, steering by large-scale flow, eyewall
-//! physics. The step of a storm is one tile, so at coarse resolution tracks are coarse.
+//! physics. The step of a storm is one tile, so at coarse resolution tracks are coarse (300 km at n24).
 
 use crate::env::*;
 use crate::flows::{Endpoint, Event, EventKind, FlowOut};

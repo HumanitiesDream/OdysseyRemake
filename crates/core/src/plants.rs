@@ -103,7 +103,7 @@ impl Module for Plants {
         let ppm = (c_air.iter().zip(grid.area_km2.iter()).map(|(&c, &a)| c as f64 * a as f64).sum::<f64>() / grid.total_area_km2() * crate::climate::PPM_PER_KGC_M2) as f32;
         let f_co2_c3 = ((ppm - 40.0) / (ppm + 80.0)) / ((350.0 - 40.0) / (350.0 + 80.0));
 
-        const L: usize = 8; // lanes per type
+        const L: usize = 9; // lanes per type
         let mut lanes: Vec<Vec<f32>> = (0..NPT * L).map(|_| vec![0f32; n]).collect();
         let mut used = vec![false; NPT * L];
         let (mut n_net, mut p_net) = (vec![0f64; n], vec![0f64; n]);
@@ -189,6 +189,15 @@ impl Module for Plants {
                         dp -= ((lanes[base + 3][i]) / CP_LEAF + (lanes[base + 4][i]) / CP_ROOT) as f64;
                     }
                 }
+                // Reserves in the roots: when the canopy is thin the roots feed new leaves (grass sprouting back after a fire
+                // or a grazing, trees flushing leaves). Carbon moves root to leaf, with the same N and P per carbon.
+                {
+                    let leaf_target = if t.woody { (t.lai_max / t.sla) * (1.0 - (-(cw + 0.1) / 2.0).exp()) } else { t.lai_max / t.sla };
+                    if cl < 0.6 * leaf_target && cr > 0.01 && f_w > 0.2 && ft > 0.2 {
+                        let mv = (0.75 * cr * dt_yr).min(0.6 * leaf_target - cl).min(0.25 * cr);
+                        if mv > 0.0 { lanes[base + 8][i] = mv; used[base + 8] = true; }
+                    }
+                }
                 // turnover and death, to the litter
                 // Wood is lost by death, not by sapwood turning to heartwood. Death rises with crowding
                 // (growth efficiency in LPJ): a stand of 12 kgC/m2 loses 4 percent a year.
@@ -199,7 +208,7 @@ impl Module for Plants {
                 if tcold > t.cold_max { mort += ((tcold - t.cold_max) / 5.0).min(2.0); }
                 if net < 0.0 && f_w < 0.3 { mort += 0.3; }
                 // evergreens cannot drop their leaves in a dry season, and pay for it
-                if t.phen == Phen::Evergreen { mort += 0.25 * (1.0 - f_w).powi(2); }
+                if t.phen == Phen::Evergreen { mort += 1.5 * (1.0 - f_w).powi(2); }
                 let k_leaf = (1.0 / t.turn_leaf.max(0.1) + mort).min(3.0) * dt_yr;
                 let k_wood = (bg_wood + mort).min(3.0) * dt_yr;
                 let k_root = (1.0 / t.turn_root.max(0.1) + mort).min(3.0) * dt_yr;
@@ -218,7 +227,7 @@ impl Module for Plants {
             p_net[i] = dp.min(0.3 * pm as f64).max(-0.15 * p_org[i].max(0.0) as f64);
         }
         if std::env::var("ODY_CHK").is_ok() {
-            for (k, l) in lanes.iter().enumerate() { if let Some(i) = l.iter().position(|v| !v.is_finite() || *v < 0.0) { eprintln!("bad lane {} (type {} lane {}) tile {} value {}", k, k / 8, k % 8, i, l[i]); break; } }
+            for (k, l) in lanes.iter().enumerate() { if let Some(i) = l.iter().position(|v| !v.is_finite() || *v < 0.0) { eprintln!("bad lane {} (type {} lane {}) tile {} value {}", k, k / L, k % L, i, l[i]); break; } }
             for (nm, v) in [("n_net", &n_net), ("p_net", &p_net)] { if let Some(i) = v.iter().position(|x| !x.is_finite()) { eprintln!("bad {} tile {}", nm, i); } }
         }
         if !any { return Ok(()); }
@@ -228,6 +237,7 @@ impl Module for Plants {
             let pools = [eco.leaf[p], eco.wood[p], eco.root[p]];
             for k in 0..3 { if used[base + k] { out.dense_local(air, pools[k], n).copy_from_slice(&lanes[base + k]); } }
             if used[base + 3] { out.dense_local(pools[0], air, n).copy_from_slice(&lanes[base + 3]); }
+            if used[base + 8] { out.dense_local(pools[2], pools[0], n).copy_from_slice(&lanes[base + 8]); }
             if used[base + 4] { out.dense_local(pools[2], air, n).copy_from_slice(&lanes[base + 4]); }
             for k in 0..3 { if used[base + 5 + k] { out.dense_local(pools[k], eco.litter, n).copy_from_slice(&lanes[base + 5 + k]); } }
         }

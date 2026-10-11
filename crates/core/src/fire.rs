@@ -26,7 +26,7 @@ use crate::stocks::{Registry, StockId};
 use crate::world::WorldError;
 
 /// ignitions per km2 per month at the strongest convective weather
-pub const LIGHTNING_PER_KM2: f64 = 5.5e-8;
+pub const LIGHTNING_PER_KM2: f64 = 6.0e-8;
 pub const FUEL_MIN: f32 = 0.04; // kgC/m2 below which a tile will not carry fire
 pub const FUEL_FULL: f32 = 0.5;
 

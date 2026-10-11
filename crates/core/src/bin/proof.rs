@@ -88,6 +88,7 @@ fn main() {
         if row.initial != 0.0 || row.total != 0.0 { writeln!(out, "# {:>10}: total {:.6e}  boundary {:+.3e}  residual {:+.2e}", row.group.name(), row.total, row.boundary_net, row.residual).unwrap(); }
     }
     writeln!(out, "# violations {}  skipped {}  fingerprint {:016x}", b.sim.world.violation_count, b.sim.skipped, b.sim.fingerprint()).unwrap();
+    { let mut by: std::collections::BTreeMap<String, usize> = Default::default(); for v in b.sim.world.violations.iter() { *by.entry(v.stock.clone()).or_default() += 1; } writeln!(out, "# recorded violations by stock: {by:?}").unwrap(); }
     for v in b.sim.world.violations.iter().take(5) { writeln!(out, "# violation: {v:?}").unwrap(); }
     for l in b.sim.world.log.iter().take(5) { writeln!(out, "# log: {l}").unwrap(); }
     if let Some(p) = &save_to { std::fs::write(p, save::write(&b.sim).expect("save")).expect("write"); writeln!(out, "# saved {p}").unwrap(); }
