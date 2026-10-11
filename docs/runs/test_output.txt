@@ -1,0 +1,243 @@
+28 | use crate::flows::{Endpoint, FlowOut};
+70 |         let (cf, cs, cp) = (view.stock(eco.sfast)?, view.stock(eco.sslow)?, view.stock(eco.spass)?);
+70 |         let (cf, cs, cp) = (view.stock(eco.sfast)?, view.stock(eco.sslow)?, view.stock(eco.spass)?);
+70 |         let (cf, cs, cp) = (view.stock(eco.sfast)?, view.stock(eco.sslow)?, view.stock(eco.spass)?);
+106 | struct Raster { w: usize, h: usize, planes: usize, data: Vec<f32> }
+409 |     let mut rows: Vec<(String, f64)> = b.sim.trace.as_ref().unwrap().iter().filter(|(k, _)| k.contains("w_ice") || k.contains("w_sn...
+5 | fn land_totals(b: &Built, stocks: &[odyssey_core::StockId]) -> f64 {
+26 | fn rank(v: &[f64]) -> Vec<f64> {
+33 | fn pearson(x: &[f64], y: &[f64]) -> f64 {
+running 75 tests
+test amoc::tests::a_small_flow_slows_it_and_a_large_one_stops_it ... ok
+test amoc::tests::today_is_a_steady_state ... ok
+test content::tests::dangling_reference_is_refused ... ok
+test content::tests::shipped_files_load_and_cross_check ... ok
+test crust::tests::flexural_length_is_about_130_km ... ok
+test crust::tests::kei_matches_tabulated_values ... ok
+test amoc::tests::it_does_not_come_back_when_the_water_stops ... ok
+test content::tests::bare_number_is_refused_with_its_path ... ok
+test demo::tests_insolation::insolation_is_sane ... ok
+test earth::tests::bilinear_handles_wrap_and_missing ... ok
+test content::tests::missing_source_and_duplicates_are_refused ... ok
+test earth::tests::file_round_trip ... ok
+test eco::tests::dry_soil_stresses_the_canopy ... ok
+test earth::tests::pixels_land_on_their_nearest_tile ... ok
+test eco::tests::tall_canopy_shades_the_grass ... ok
+test env::tests::enthalpy_round_trips_and_stays_positive ... ok
+test eco::tests::ten_types_tallest_first ... ok
+test env::tests::rain_snow_split ... ok
+test eco::tests::temperature_response_is_a_plateau ... ok
+test env::tests::sea_ice_mass_matches_latent_heat ... ok
+test flows::tests::zero_is_skipped_and_negative_is_bad ... ok
+test env::tests::lapse_cools_high_bands ... ok
+test grid::tests::cell_count_and_pentagons ... ok
+test grid::tests::areas_sum_to_the_sphere ... ok
+test grid::tests::lat_lon_ranges ... ok
+test grid::tests::neighbours_are_symmetric ... ok
+test crust::tests::the_shape_dips_then_lifts_a_forebulge ... ok
+test grid::tests::up_and_down_lose_nothing ... ok
+test grid::tests::length_errors_are_reported ... ok
+test hazards::tests::mean_event_is_bounded ... ok
+test hazards::tests::moment_magnitude_round_trip ... ok
+test hazards::tests::vei_classes ... ok
+test hydro::tests::oudin_is_zero_in_the_cold_and_rises_with_warmth ... ok
+test hydro::tests::waterfill_levels ... ok
+test landscape::tests::soil_thickens_where_it_is_not_carried_away ... ok
+test landscape::tests::weathering_rises_with_warmth_and_rain ... ok
+test orbit::tests::global_mean_insolation_is_a_quarter_of_the_constant ... ok
+test orbit::tests::precession_moves_summer_insolation ... ok
+test orbit::tests::today_matches_known_values ... ok
+test plants::tests::par_share_and_lue_give_realistic_gpp ... ok
+test rng::tests::same_inputs_same_stream ... ok
+test rng::tests::uniform_in_range ... ok
+test routing::tests::every_cell_drains_to_the_sea ... ok
+test routing::tests::a_pit_becomes_a_lake_that_spills ... ok
+test routing::tests::same_surface_gives_same_routing ... ok
+test save::tests::damaged_saves_are_errors ... ok
+test save::tests::an_extra_section_from_a_newer_writer_is_skipped ... ok
+test save::tests::lossless_round_trip_is_bit_exact ... ok
+test save::tests::quantised_error_is_within_half_a_step ... ok
+test save::tests::quantised_out_of_range_is_an_error_not_a_wrap ... ok
+test grid::tests::coarse_parent_is_the_nearest_centre ... ok
+test save::tests::unknown_sections_and_stocks_are_skipped_missing_ones_default ... ok
+test save::tests::sparse_is_smaller_than_exact_for_mostly_zero ... ok
+test sim::tests::modules_run_and_budget_closes ... ok
+test sim::tests::period_is_respected_and_dt_is_passed ... ok
+test sim::tests::duplicate_and_unknown_are_refused ... ok
+thread 'sim::tests::undeclared_read_is_an_error_and_a_panic_is_survived' (17153) panicked at crates/core/src/sim.rs:200:96:
+bad state
+stack backtrace:
+   0: __rustc::rust_begin_unwind
+   1: core::panicking::panic_fmt
+   2: <odyssey_core::sim::tests::Boom as odyssey_core::module::Module>::step
+   3: <odyssey_core::sim::Sim>::step_month::{closure#4}
+   4: <odyssey_core::simtest sim::tests::undeclared_write_drops_the_modules_output ... ::Simok>
+::run_months
+   5: <odyssey_core::sim::tests::undeclared_read_is_an_error_and_a_panic_is_survived::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+test soilbgc::tests::frozen_and_flooded_ground_hardly_decays ... ok
+test soilbgc::tests::partitions_sum_to_one ... ok
+test grid::tests::standard_size_is_48km ... ok
+test stocks::tests::lookup_by_name ... ok
+test units::tests::clock_wraps_months ... ok
+test units::tests::conversions_round_trip ... ok
+test world::tests::boundary_flow_is_tallied ... ok
+test world::tests::lateral_flow_between_tiles_of_different_area_conserves ... ok
+test world::tests::local_flow_moves_density_and_keeps_total ... ok
+test world::tests::mixing_kinds_of_matter_is_refused ... ok
+test world::tests::out_of_range_tile_is_refused ... ok
+test world::tests::overdraw_is_a_violation_not_a_clamp ... ok
+test world::tests::rounding_sized_overdraw_is_kept_as_debt_not_flagged ... ok
+test world::tests::unbalanced_transit_is_refused ... ok
+test world::tests::undeclared_write_is_refused ... ok
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
+thread 'sim::tests::undeclared_read_is_an_error_and_a_panic_is_survived' (17153) panicked at crates/core/src/sim.rs:200:96:
+bad state
+stack backtrace:
+   0: __rustc::rust_begin_unwind
+   1: core::panicking::panic_fmt
+   2: <odyssey_core::sim::tests::Boom as odyssey_core::module::Module>::step
+   3: <odyssey_core::sim::Sim>::step_month::{closure#4}
+   4: <odyssey_core::sim::Sim>::run_months
+   5: <odyssey_core::sim::tests::undeclared_read_is_an_error_and_a_panic_is_survived::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
+thread 'stocks::tests::duplicate_names_are_refused' (17157) panicked at crates/core/src/stocks.rs:63:9:
+stock x is already registered
+stack backtrace:
+   0: __rustc::rust_begin_unwind
+   1: core::panicking::panic_fmt
+   2: <odyssey_core::stocks::Registry>::add_stock
+   3: <odyssey_core::stocks::tests::duplicate_names_are_refused::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
+thread 'sim::tests::undeclared_read_is_an_error_and_a_panic_is_survived' (17153) panicked at crates/core/src/sim.rs:200:96:
+bad state
+stack backtrace:
+ test stocks::tests::duplicate_names_are_refused - should panic ...  ok 0
+: __rustc::rust_begin_unwind
+   1: core::panicking::panic_fmt
+   2: <odyssey_core::sim::tests::Boom as odyssey_core::module::Module>::step
+   3: <odyssey_core::sim::Sim>::step_month::{closure#4}
+   4: <odyssey_core::sim::Sim>::run_months
+   5: <odyssey_core::sim::tests::undeclared_read_is_an_error_and_a_panic_is_survived::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
+test sim::tests::undeclared_read_is_an_error_and_a_panic_is_survived ... ok
+test sim::tests::threads_do_not_change_the_result ... ok
+test result: ok. 75 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.13s
+running 0 tests
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+running 0 tests
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+running 0 tests
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+running 2 tests
+CO2 350.0 -> 350.0 ppm after 60 years
+test co2_holds_still_at_rest ... ok
+after 100 years 57 percent of the pulse is still in the air
+test a_pulse_of_carbon_is_taken_up ... ok
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 9.88s
+running 8 tests
+test debug_antarctic_tile ... ignored
+test debug_blowup ... ignored
+test debug_tile ... ignored
+test baked_earth_has_no_holes ... ok
+test base_climate_stays_put ... ok
+whole model: mean departure -0.00 K, worst 3.3 K at tile 3622 lat -67 ocean false
+test whole_model_climate_stays_near_the_base ... ok
+glacial CO2 and orbit: -1.96 K after 300 years
+test glacial_carbon_dioxide_and_orbit_cool_the_world_part_of_the_way ... ok
+warming 2.53 K after 300 years
+test doubling_co2_warms_by_a_plausible_amount ... ok
+test result: ok. 5 passed; 0 failed; 3 ignored; 0 measured; 0 filtered out; finished in 12.38s
+running 1 test
+centre sag 864 m, local isostasy 834 m
+forebulge tiles 177
+after 3000 years 0.37 of the sag is left
+test sag_forebulge_and_rebound ... ok
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 23.56s
+running 6 tests
+test save_and_resume_equals_never_stopping ... ok
+test ten_thousand_years_two_seeds ... ignored, 10,000 simulated years; run with --ignored --release
+test global_result_does_not_depend_on_tile_size ... ok
+test budgets_close_and_nothing_goes_negative ... ok
+test same_seed_same_world_threads_or_not ... ok
+test the_demo_climate_settles_near_earth ... ok
+test result: ok. 5 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 1.88s
+running 4 tests
+test debug_which_stocks_differ_after_resume ... ignored
+test a_different_seed_gives_a_different_world ... ok
+test same_seed_same_world_with_and_without_threads ... ok
+test save_and_resume_matches_running_straight_through ... ok
+test result: ok. 3 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 9.81s
+running 20 tests
+test debug_after_spinup ... ignored
+test debug_carbon_budget ... ignored
+test debug_equilibrium_report ... ignored
+test debug_fauna_report ... ignored
+test debug_fire_budget ... ignored
+test debug_first_bad_month ... ignored
+test debug_follow_tile ... ignored
+test debug_ice_flows ... ignored
+test debug_leave_one_out ... ignored
+test debug_litter_map ... ignored
+test debug_n_consistency ... ignored
+test debug_np_flows ... ignored
+test debug_sample_tiles ... ignored
+test debug_sea_report ... ignored
+test debug_speed ... ignored
+test debug_tile_by_id ... ignored
+test debug_tile_growth ... ignored
+test debug_top_litter ... ignored
+test debug_water_stores ... ignored
+60 years in 18.9s, skipped 0 first log None
+violations 0 None
+test plants_grow_and_books_close ... ok
+test result: ok. 1 passed; 0 failed; 19 ignored; 0 measured; 0 filtered out; finished in 19.00s
+running 7 tests
+test debug_find_savanna_tiles ... ignored
+test debug_plant_bins ... ignored
+test debug_rain_bins ... ignored
+test animals_die_back_when_their_food_is_taken_away has been running for over 60 seconds
+test herbivore_biomass_is_highest_in_savanna_rain_and_lower_in_rainforest_and_desert has been running for over 60 seconds
+test predator_biomass_rises_with_prey_biomass has been running for over 60 seconds
+test taking_away_the_herbivores_lets_fuel_build_and_fire_grow has been running for over 60 seconds
+grazer carbon before 1.946e-1, after starving 3 years 9.864e-2
+test animals_die_back_when_their_food_is_taken_away ... ok
+mean herbivore carbon (kgC/m2): desert under 200 mm 7.73e-5, savanna 200 to 1000 mm 1.11e-3, wet forest over 1400 mm 1.14e-4
+test herbivore_biomass_is_highest_in_savanna_rain_and_lower_in_rainforest_and_desert ... ok
+582 tiles, log-log slope of predator on prey biomass 1.83 (Hatton 2015: about 0.75)
+test predator_biomass_rises_with_prey_biomass ... ok
+burned per year: with herbivores 3507740 km2, without 3845503 km2
+test taking_away_the_herbivores_lets_fuel_build_and_fire_grow ... ok
+test result: ok. 4 passed; 0 failed; 3 ignored; 0 measured; 0 filtered out; finished in 158.89s
+running 2 tests
+per year, model vs record: M6+ 113.0 vs 119.5, M7+ 9.6 vs 13.5, M8+ 0.47 vs 0.86
+test quake_counts_by_size_sit_near_the_record ... ok
+eruptions in 6000 yr: total 3706, VEI>=4 886, VEI>=5 361, VEI>=6 32
+test eruptions_come_in_every_size_and_the_big_ones_are_rare ... ok
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 24.91s
+running 1 test
+sediment into rivers 23.2 Gt/yr, lost to the deep sea 1.9 Gt/yr
+landscape lanes at calibration: 17
+mean land height change -0.003 m in 50 years
+regolith: 189 tiles under 0.5 m, 5776 tiles over
+test stands_still_and_balances ... ok
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 19.76s
+running 3 tests
+storms born per year 88.5, landfalls per year 38.5, by month [56, 47, 66, 85, 99, 82, 60, 60, 72, 71, 34, 38], violations 0
+test cyclones_form_in_the_warm_season_and_some_make_landfall ... ok
+rain log-anomaly sd 0.300, violations 0, skipped 0
+test weather_keeps_the_mean_rain_and_the_books_close ... ok
+ENSO sd 0.85 K, mean 0.00, first zero crossing at 12 months, autocorrelation peak at 47 months (0.44)
+test enso_has_the_size_and_rhythm_of_the_real_one ... ok
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 15.65s
+running 4 tests
+test debug_ice_flows ... ignored
+test debug_ice_loss ... ignored
+test debug_ice_monthly ... ignored
+violations 0 first None
+sea level 0.004638668 -> -0.54016113
+ice change 1.730e10 (start 2.515e13); sea change -1.828e11; snow start 0.000e0
+sea 1.336e15 ice 2.516e13 snow 1.078e10 land 1.182e11
+test water_closes_and_sea_level_holds ... ok
+test result: ok. 1 passed; 0 failed; 3 ignored; 0 measured; 0 filtered out; finished in 1.94s
+running 0 tests
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
